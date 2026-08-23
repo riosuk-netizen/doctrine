@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Fits — Doctrine Hub{% endblock %}
+
+{% block content %}
+<div class="library-head">
+  <div>
+    <h1>Fitting Library</h1>
+    <p class="sub">{{ fits|length }} fit{{ 's' if fits|length != 1 }} on file</p>
+  </div>
+  <form class="search" method="get">
+    {% if active_category %}<input type="hidden" name="category" value="{{ active_category }}">{% endif %}
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by ship or fit name…">
+    <button type="submit">Search</button>
+  </form>
+</div>
+
+<div class="filter-row">
+  <a href="{{ url_for('main.index', q=query) }}" class="chip {{ 'chip-active' if not active_category }}">All</a>
+  {% for cat in categories %}
+    <a href="{{ url_for('main.index', category=cat.id, q=query) }}"
+       class="chip {{ 'chip-active' if active_category == cat.id }}">{{ cat.name }}</a>
+  {% endfor %}
+</div>
+
+{% if fits %}
+<div class="fit-grid">
+  {% for fit in fits %}
+  <a href="{{ url_for('main.view_fit', fit_id=fit.id) }}" class="fit-card">
+    <div class="fit-card-top">
+      <span class="fit-card-ship">{{ fit.ship_name }}</span>
+      {% if fit.category %}<span class="fit-card-cat">{{ fit.category.name }}</span>{% endif %}
+    </div>
+    <h3 class="fit-card-name">{{ fit.name }}</h3>
+    <div class="fit-card-meta">
+      <span>{{ fit.module_count }} items</span>
+      <span class="dot">·</span>
+      <span>{{ fit.created_at.strftime('%d %b %Y') }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No fits here yet.</p>
+  <a href="{{ url_for('main.import_fit') }}" class="cta">Import the first one</a>
+</div>
+{% endif %}
+{% endblock %}

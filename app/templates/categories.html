@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Categories — Doctrine Hub{% endblock %}
+
+{% block content %}
+<div class="import-wrap">
+  <h1>Categories</h1>
+  <p class="sub">Group fits by doctrine — e.g. Roaming, Home Defense, Capitals.</p>
+
+  <form method="post" class="category-form">
+    <input type="text" name="name" placeholder="New category name" required>
+    <button type="submit" class="cta">Add</button>
+  </form>
+
+  {% if categories %}
+  <ul class="category-list">
+    {% for cat in categories %}
+    <li>
+      <span>{{ cat.name }}</span>
+      <span class="cat-count">{{ cat.fits|length }} fit{{ 's' if cat.fits|length != 1 }}</span>
+      <form method="post" action="{{ url_for('main.delete_category', category_id=cat.id) }}"
+            onsubmit="return confirm('Delete this category? Fits in it become uncategorised.');">
+        <button type="submit" class="cta-text">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="sub">No categories yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

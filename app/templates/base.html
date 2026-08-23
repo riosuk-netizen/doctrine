@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Doctrine Hub{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a href="{{ url_for('main.index') }}" class="brand">
+      <span class="brand-mark">▲</span>
+      <span class="brand-text">DOCTRINE&nbsp;HUB</span>
+    </a>
+    <nav class="topnav">
+      <a href="{{ url_for('main.index') }}" class="{{ 'active' if request.endpoint == 'main.index' }}">Fits</a>
+      <a href="{{ url_for('main.manage_categories') }}" class="{{ 'active' if request.endpoint == 'main.manage_categories' }}">Categories</a>
+      <a href="{{ url_for('main.import_fit') }}" class="cta">+ Import Fit</a>
+    </nav>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>Doctrine Hub — corp fit library</span>
+  </footer>
+</body>
+</html>

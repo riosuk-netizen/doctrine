@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ fit.name }} — Doctrine Hub{% endblock %}
+
+{% set section_labels = {'high': 'High Slots', 'mid': 'Mid Slots', 'low': 'Low Slots', 'rig': 'Rigs', 'drone': 'Drone Bay', 'cargo': 'Cargo Bay'} %}
+{% set section_order = ['high', 'mid', 'low', 'rig', 'drone', 'cargo'] %}
+
+{% block content %}
+<div class="fit-detail">
+  <div class="fit-detail-head">
+    <div>
+      <span class="fit-detail-ship">{{ fit.ship_name }}</span>
+      <h1>{{ fit.name }}</h1>
+      {% if fit.category %}<span class="fit-card-cat">{{ fit.category.name }}</span>{% endif %}
+    </div>
+    <div class="fit-detail-actions">
+      <a href="{{ url_for('main.export_fit', fit_id=fit.id) }}" class="cta cta-ghost">Export EFT</a>
+      <form method="post" action="{{ url_for('main.delete_fit', fit_id=fit.id) }}"
+            onsubmit="return confirm('Delete this fit permanently?');">
+        <button type="submit" class="cta cta-danger">Delete</button>
+      </form>
+    </div>
+  </div>
+
+  {% if fit.notes %}
+  <div class="fit-notes">{{ fit.notes }}</div>
+  {% endif %}
+
+  <div class="slot-panels">
+    {% for section in section_order %}
+      {% if sections.get(section) %}
+      <div class="slot-panel">
+        <h2>{{ section_labels[section] }}</h2>
+        <ul class="module-list">
+          {% for mod in sections[section] %}
+          <li>
+            <span class="module-name">{{ mod.item_name }}</span>
+            {% if mod.charge_name %}<span class="module-charge">{{ mod.charge_name }}</span>{% endif %}
+            {% if mod.quantity %}<span class="module-qty">×{{ mod.quantity }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <details class="raw-eft">
+    <summary>Raw EFT source</summary>
+    <pre>{{ fit.raw_eft }}</pre>
+  </details>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Import Fit — Doctrine Hub{% endblock %}
+
+{% block content %}
+<div class="import-wrap">
+  <h1>Import Fit</h1>
+  <p class="sub">Paste an EFT export from the client, or upload a .txt/.eft file.</p>
+
+  <form method="post" enctype="multipart/form-data" class="import-form">
+    <div class="field">
+      <label for="eft_text">EFT text</label>
+      <textarea id="eft_text" name="eft_text" rows="14" placeholder="[Merlin, PVP Merlin]&#10;Damage Control II&#10;...">{{ raw_text or '' }}</textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="eft_file">…or upload a file</label>
+        <input type="file" id="eft_file" name="eft_file" accept=".txt,.eft">
+      </div>
+      <div class="field">
+        <label for="category_id">Category</label>
+        <select id="category_id" name="category_id">
+          <option value="0">Uncategorised</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes <span class="optional">optional</span></label>
+      <textarea id="notes" name="notes" rows="3" placeholder="Flies best in small gangs, swap ammo for null-sec…"></textarea>
+    </div>
+
+    <button type="submit" class="cta cta-lg">Import Fit</button>
+  </form>
+</div>
+{% endblock %}

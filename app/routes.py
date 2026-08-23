@@ -26,14 +26,21 @@ def index():
                             active_category=category_id, query=query)
 
 
-def _arc_positions(count, center_deg, spread_deg):
-    """Evenly space `count` items across an arc, returning a list of angles in degrees."""
+def _arc_positions(count, center_deg, max_spread_deg=90, angular_step_deg=16):
+    """
+    Evenly space `count` items across an arc centered on `center_deg`.
+    Spread grows with the item count (so few items cluster tightly near
+    the center rather than fanning out unnecessarily) but is capped at
+    `max_spread_deg` so the arc stays in its band (e.g. top or bottom)
+    instead of wrapping around toward the sides.
+    """
     if count <= 0:
         return []
     if count == 1:
         return [center_deg]
-    start = center_deg - spread_deg / 2
-    step = spread_deg / (count - 1)
+    spread = min(max_spread_deg, angular_step_deg * (count - 1))
+    start = center_deg - spread / 2
+    step = spread / (count - 1)
     return [start + i * step for i in range(count)]
 
 
@@ -46,8 +53,8 @@ def view_fit(fit_id):
 
     # Wheel angles: highs arc across the top, lows arc across the bottom.
     # Mids and rigs are rendered as side stacks in the template, not on the ring.
-    high_angles = _arc_positions(len(sections.get("high", [])), center_deg=-90, spread_deg=110)
-    low_angles = _arc_positions(len(sections.get("low", [])), center_deg=90, spread_deg=110)
+    high_angles = _arc_positions(len(sections.get("high", [])), center_deg=-90)
+    low_angles = _arc_positions(len(sections.get("low", [])), center_deg=90)
 
     return render_template(
         "fit_detail.html", fit=fit, sections=sections,

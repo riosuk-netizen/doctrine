@@ -315,8 +315,8 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
 
 .fit-wheel {
   position: relative;
-  width: 380px;
-  height: 380px;
+  width: 420px;
+  height: 420px;
   flex-shrink: 0;
 }
 
@@ -326,7 +326,7 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
   border-radius: 50%;
   border: 2px solid var(--line);
   background:
-    radial-gradient(circle at 50% 50%, transparent 0 118px, rgba(38, 43, 54, 0.35) 119px, rgba(38, 43, 54, 0.35) 190px, transparent 191px);
+    radial-gradient(circle at 50% 50%, transparent 0 128px, rgba(38, 43, 54, 0.35) 129px, rgba(38, 43, 54, 0.35) 208px, transparent 209px);
 }
 
 .wheel-center {
@@ -334,8 +334,8 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 210px;
-  height: 210px;
+  width: 230px;
+  height: 230px;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid var(--amber-dim);
@@ -354,12 +354,12 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
 
 .wheel-slot {
   position: absolute;
-  top: calc(50% + 155px * sin(var(--angle, 0deg)));
-  left: calc(50% + 155px * cos(var(--angle, 0deg)));
+  top: calc(50% + 200px * sin(var(--angle, 0deg)));
+  left: calc(50% + 200px * cos(var(--angle, 0deg)));
   transform: translate(-50%, -50%);
-  width: 46px;
-  height: 46px;
-  border-radius: 6px;
+  width: 38px;
+  height: 38px;
+  border-radius: 5px;
   background: var(--panel);
   border: 1px solid var(--line);
   display: flex;
@@ -369,29 +369,36 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
 }
 .wheel-slot:hover {
   border-color: var(--amber);
-  transform: translate(-50%, -50%) scale(1.12);
+  transform: translate(-50%, -50%) scale(1.15);
   z-index: 5;
 }
-.wheel-slot img { width: 30px; height: 30px; border-radius: 3px; }
-.wheel-slot-fallback { color: var(--text-muted); font-family: var(--font-mono); font-size: 13px; }
+.wheel-slot img { width: 24px; height: 24px; border-radius: 3px; }
+.wheel-slot-fallback { color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; }
 .wheel-slot-charge {
   position: absolute;
   top: -3px; right: -3px;
   width: 0; height: 0;
-  border-left: 8px solid transparent;
-  border-top: 8px solid var(--amber);
+  border-left: 7px solid transparent;
+  border-top: 7px solid var(--amber);
 }
 
 .wheel-side {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 8px;
+  max-height: 420px;
+  width: 46px;
 }
 .wheel-slot-side {
   position: static;
   transform: none;
+  width: 38px;
+  height: 38px;
 }
-.wheel-slot-side:hover { transform: scale(1.12); }
+.wheel-slot-side:hover { transform: scale(1.15); }
 
 /* ---------- Cargo / drone chips ---------- */
 .bay-chips {
@@ -510,9 +517,9 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
   .wheel-wrap { flex-direction: column; }
   .fit-wheel { width: 300px; height: 300px; }
   .wheel-center { width: 165px; height: 165px; }
-  .wheel-slot { top: calc(50% + 122px * sin(var(--angle, 0deg))); left: calc(50% + 122px * cos(var(--angle, 0deg))); width: 38px; height: 38px; }
-  .wheel-slot img { width: 24px; height: 24px; }
-  .wheel-side { flex-direction: row; }
+  .wheel-slot { top: calc(50% + 140px * sin(var(--angle, 0deg))); left: calc(50% + 140px * cos(var(--angle, 0deg))); width: 32px; height: 32px; }
+  .wheel-slot img { width: 20px; height: 20px; }
+  .wheel-side { flex-direction: row; max-height: none; width: auto; }
 }
 
 /* Reduced motion */

@@ -304,6 +304,115 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
   margin-bottom: 28px;
 }
 
+/* ---------- Fitting wheel ---------- */
+.wheel-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 30px 0 10px;
+}
+
+.fit-wheel {
+  position: relative;
+  width: 380px;
+  height: 380px;
+  flex-shrink: 0;
+}
+
+.wheel-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 118px, rgba(38, 43, 54, 0.35) 119px, rgba(38, 43, 54, 0.35) 190px, transparent 191px);
+}
+
+.wheel-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--amber-dim);
+  background: var(--panel-raised);
+  box-shadow: 0 0 30px rgba(232, 163, 61, 0.08);
+}
+.wheel-center img { width: 100%; height: 100%; object-fit: cover; }
+.wheel-center-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  color: var(--text-muted);
+}
+
+.wheel-slot {
+  position: absolute;
+  top: calc(50% + 155px * sin(var(--angle, 0deg)));
+  left: calc(50% + 155px * cos(var(--angle, 0deg)));
+  transform: translate(-50%, -50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.wheel-slot:hover {
+  border-color: var(--amber);
+  transform: translate(-50%, -50%) scale(1.12);
+  z-index: 5;
+}
+.wheel-slot img { width: 30px; height: 30px; border-radius: 3px; }
+.wheel-slot-fallback { color: var(--text-muted); font-family: var(--font-mono); font-size: 13px; }
+.wheel-slot-charge {
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-top: 8px solid var(--amber);
+}
+
+.wheel-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wheel-slot-side {
+  position: static;
+  transform: none;
+}
+.wheel-slot-side:hover { transform: scale(1.12); }
+
+/* ---------- Cargo / drone chips ---------- */
+.bay-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.bay-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--blue);
+  padding: 5px 12px;
+  border-radius: 3px;
+}
+.bay-chip-cargo { border-left-color: var(--amber); }
+
 .slot-panels {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -398,6 +507,12 @@ textarea:focus, select:focus, input:focus { outline: 2px solid var(--blue); outl
   .page { padding: 24px 18px 60px; }
   .field-row { flex-direction: column; }
   .search input { width: 160px; }
+  .wheel-wrap { flex-direction: column; }
+  .fit-wheel { width: 300px; height: 300px; }
+  .wheel-center { width: 165px; height: 165px; }
+  .wheel-slot { top: calc(50% + 122px * sin(var(--angle, 0deg))); left: calc(50% + 122px * cos(var(--angle, 0deg))); width: 38px; height: 38px; }
+  .wheel-slot img { width: 24px; height: 24px; }
+  .wheel-side { flex-direction: row; }
 }
 
 /* Reduced motion */

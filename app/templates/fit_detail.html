@@ -25,6 +25,84 @@
   <div class="fit-notes">{{ fit.notes }}</div>
   {% endif %}
 
+  <!-- Fitting wheel: ship render at center, highs arced across the top,
+       lows arced across the bottom, mids/rigs as side stacks — mirrors
+       the layout of EVE's in-game fitting window. -->
+  <div class="wheel-wrap">
+    <div class="fit-wheel">
+      <div class="wheel-ring"></div>
+
+      <div class="wheel-center">
+        {% if fit.ship_type_id %}
+        <img src="https://images.evetech.net/types/{{ fit.ship_type_id }}/render?size=256" alt="{{ fit.ship_name }}">
+        {% else %}
+        <div class="wheel-center-fallback">{{ fit.ship_name[:2]|upper }}</div>
+        {% endif %}
+      </div>
+
+      {% for mod in sections.get('high', []) %}
+      <div class="wheel-slot wheel-slot-high" style="--angle: {{ high_angles[loop.index0] }}deg;" title="{{ mod.item_name }}{% if mod.charge_name %} — {{ mod.charge_name }}{% endif %}">
+        {% if mod.type_id %}
+        <img src="https://images.evetech.net/types/{{ mod.type_id }}/icon?size=64" alt="{{ mod.item_name }}">
+        {% else %}
+        <span class="wheel-slot-fallback">?</span>
+        {% endif %}
+        {% if mod.charge_name %}<span class="wheel-slot-charge"></span>{% endif %}
+      </div>
+      {% endfor %}
+
+      {% for mod in sections.get('low', []) %}
+      <div class="wheel-slot wheel-slot-low" style="--angle: {{ low_angles[loop.index0] }}deg;" title="{{ mod.item_name }}">
+        {% if mod.type_id %}
+        <img src="https://images.evetech.net/types/{{ mod.type_id }}/icon?size=64" alt="{{ mod.item_name }}">
+        {% else %}
+        <span class="wheel-slot-fallback">?</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if sections.get('rig') %}
+    <div class="wheel-side wheel-side-left">
+      {% for mod in sections['rig'] %}
+      <div class="wheel-slot wheel-slot-side" title="{{ mod.item_name }}">
+        {% if mod.type_id %}
+        <img src="https://images.evetech.net/types/{{ mod.type_id }}/icon?size=64" alt="{{ mod.item_name }}">
+        {% else %}
+        <span class="wheel-slot-fallback">?</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if sections.get('mid') %}
+    <div class="wheel-side wheel-side-right">
+      {% for mod in sections['mid'] %}
+      <div class="wheel-slot wheel-slot-side" title="{{ mod.item_name }}{% if mod.charge_name %} — {{ mod.charge_name }}{% endif %}">
+        {% if mod.type_id %}
+        <img src="https://images.evetech.net/types/{{ mod.type_id }}/icon?size=64" alt="{{ mod.item_name }}">
+        {% else %}
+        <span class="wheel-slot-fallback">?</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if sections.get('drone') or sections.get('cargo') %}
+  <div class="bay-chips">
+    {% for mod in sections.get('drone', []) %}
+    <span class="bay-chip">{{ mod.item_name }}{% if mod.quantity %} ×{{ mod.quantity }}{% endif %}</span>
+    {% endfor %}
+    {% for mod in sections.get('cargo', []) %}
+    <span class="bay-chip bay-chip-cargo">{{ mod.item_name }}{% if mod.quantity %} ×{{ mod.quantity }}{% endif %}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Text breakdown underneath, for exact names/charges the wheel can't label -->
   <div class="slot-panels">
     {% for section in section_order %}
       {% if sections.get(section) %}

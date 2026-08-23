@@ -26,13 +26,33 @@ def index():
                             active_category=category_id, query=query)
 
 
+def _arc_positions(count, center_deg, spread_deg):
+    """Evenly space `count` items across an arc, returning a list of angles in degrees."""
+    if count <= 0:
+        return []
+    if count == 1:
+        return [center_deg]
+    start = center_deg - spread_deg / 2
+    step = spread_deg / (count - 1)
+    return [start + i * step for i in range(count)]
+
+
 @bp.route("/fit/<int:fit_id>")
 def view_fit(fit_id):
     fit = Fit.query.get_or_404(fit_id)
     sections = {}
     for m in fit.modules:
         sections.setdefault(m.slot_section, []).append(m)
-    return render_template("fit_detail.html", fit=fit, sections=sections)
+
+    # Wheel angles: highs arc across the top, lows arc across the bottom.
+    # Mids and rigs are rendered as side stacks in the template, not on the ring.
+    high_angles = _arc_positions(len(sections.get("high", [])), center_deg=-90, spread_deg=110)
+    low_angles = _arc_positions(len(sections.get("low", [])), center_deg=90, spread_deg=110)
+
+    return render_template(
+        "fit_detail.html", fit=fit, sections=sections,
+        high_angles=high_angles, low_angles=low_angles,
+    )
 
 
 @bp.route("/fit/<int:fit_id>/export")

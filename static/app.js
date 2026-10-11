@@ -8,6 +8,29 @@
     toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
   }
 
+  // "How to paste into EVE" pop-up, shown after copying a fit
+  const howto = document.getElementById("howto");
+  const SKIP_KEY = "rw-hide-howto";
+  function howtoHidden() {
+    try { return localStorage.getItem(SKIP_KEY) === "1"; } catch (e) { return false; }
+  }
+  function showHowto(fitName) {
+    if (!howto || typeof howto.showModal !== "function" || howtoHidden()) return false;
+    document.getElementById("howto-fit").textContent = fitName || "";
+    document.getElementById("howto-skip").checked = false;
+    howto.showModal();
+    return true;
+  }
+  if (howto) {
+    howto.addEventListener("close", () => {
+      if (document.getElementById("howto-skip").checked) {
+        try { localStorage.setItem(SKIP_KEY, "1"); } catch (e) { /* private mode */ }
+      }
+    });
+    // click outside the box closes it
+    howto.addEventListener("click", (e) => { if (e.target === howto) howto.close(); });
+  }
+
   async function copyText(text) {
     if (navigator.clipboard && window.isSecureContext) {
       try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
@@ -34,7 +57,8 @@
       const label = btn.textContent;
       btn.classList.add("copied");
       btn.textContent = "Copied!";
-      showToast(btn.dataset.toast || "Fit copied. In EVE: Fitting window > Import & Export > Import from Clipboard");
+      const popped = btn.dataset.howto === "fit" && showHowto(btn.dataset.fitname);
+      if (!popped) showToast(btn.dataset.toast || "Fit copied. In EVE: Fitting window > Import & Export > Import from Clipboard");
       setTimeout(() => { btn.classList.remove("copied"); btn.textContent = label; }, 1800);
     } else {
       showToast("Couldn't copy automatically. Open Module list and copy the text by hand.");

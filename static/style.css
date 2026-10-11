@@ -310,3 +310,35 @@ textarea { resize: vertical; }
 .doc-actions { padding-top: 30px; }
 .notes.rich { white-space: normal; }
 @media (max-width: 720px) { .doc-actions { padding-top: 0; } }
+
+/* "how to paste into EVE" pop-up */
+.howto {
+  width: min(480px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line); border-radius: 12px;
+  background: linear-gradient(180deg, var(--panel), var(--bg-2)); color: var(--text);
+  box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(232,163,60,.15);
+}
+.howto::backdrop { background: rgba(3,5,8,.72); backdrop-filter: blur(3px); }
+.howto[open] { animation: howto-in .18s ease-out; }
+@keyframes howto-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .howto[open] { animation: none; } }
+.howto-inner { padding: 22px; }
+.howto-head { display: flex; align-items: flex-start; gap: 14px; }
+.howto-head > div { flex: 1; min-width: 0; }
+.howto-head h2 { margin: 0; font-size: 1.5rem; line-height: 1.1; }
+.howto-tick { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(79,191,122,.15); color: #8fe0ad; border: 1px solid rgba(79,191,122,.4); font-weight: 700; font-size: 1.1rem; }
+.howto-fit { margin: 2px 0 0; color: var(--accent-2); font-weight: 600; overflow-wrap: anywhere; }
+.howto-x { flex: none; background: none; border: 0; color: var(--muted); font-size: 1.6rem; line-height: 1; cursor: pointer; padding: 0 4px; }
+.howto-x:hover { color: var(--text); }
+.howto-lead { margin: 18px 0 10px; color: var(--muted); }
+.howto-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.howto-steps li { display: flex; gap: 12px; align-items: flex-start; }
+.howto-steps b { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #1a1205; font-size: .82rem; margin-top: 1px; }
+.howto-steps strong { color: var(--text); }
+.howto-steps span { color: #b4c0cf; line-height: 1.5; }
+kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: #05070a; font: 600 .8rem "Inter", sans-serif; color: var(--text); }
+.howto-tip { margin: 16px 0 0; padding: 10px 12px; border-radius: 8px; background: rgba(232,163,60,.08); border: 1px solid rgba(232,163,60,.25); color: var(--accent-2); font-size: .85rem; }
+.howto-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+.howto-skip { flex-direction: row; align-items: center; gap: 8px; font-weight: 400; color: var(--muted); font-size: .85rem; cursor: pointer; }
+.howto-skip input { width: auto; accent-color: var(--accent); }
+.nowrap { white-space: nowrap; }
+.blue-box { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: #2f7fd6; box-shadow: 0 0 6px rgba(47,127,214,.6); vertical-align: -2px; margin: 0 2px; }

@@ -6,6 +6,23 @@
   <title>{% block title %}Rift Watch Fleet Doctrines{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  {% set og_title = self.og_title() | trim or 'Rift Watch Fleet Doctrines' %}
+  {% set og_desc = self.og_desc() | trim or 'Welcome to the Rift Watch fleet doctrine site. Approved fits, required skills and one-click import into EVE.' %}
+  <meta name="description" content="{{ og_desc }}">
+  <meta name="theme-color" content="#e8a33c">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Rift Watch Fleet Doctrines">
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ og_desc }}">
+  <meta property="og:url" content="{{ request.url }}">
+  <meta property="og:image" content="{{ url_for('static', filename='og-banner.png', _external=True) }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Rift Watch Fleet Doctrines">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title }}">
+  <meta name="twitter:description" content="{{ og_desc }}">
+  <meta name="twitter:image" content="{{ url_for('static', filename='og-banner.png', _external=True) }}">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo-still.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -43,5 +60,6 @@
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
+{% if false %}{% block og_title %}{% endblock %}{% block og_desc %}{% endblock %}{% endif %}
 </body>
 </html>

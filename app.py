@@ -10,9 +10,12 @@ import esi
 import skills
 from eft import (DISPLAY_ORDER, LABELS, EFTError, all_names, build_layout,
                  doctrine_xml, parse_fit, split_fits)
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 from models import Doctrine, Fit, db
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # Render sits behind a proxy: keep links https
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-only-change-me")
 db_url = os.environ.get("DATABASE_URL", "sqlite:///doctrines.db")
 for prefix in ("postgres://", "postgresql://"):

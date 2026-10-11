@@ -68,3 +68,19 @@ def resolve(names):
         if new:
             db.session.commit()
     return found
+
+
+def character_id(name):
+    """EVE character ID for an exact character name, or None."""
+    name = (name or "").strip()
+    if not name:
+        return None
+    try:
+        r = session.post(f"{ESI}/universe/ids/", params={**PARAMS, "language": "en"}, json=[name], timeout=15)
+        r.raise_for_status()
+        for c in r.json().get("characters", []):
+            if c["name"].lower() == name.lower():
+                return c["id"]
+    except requests.RequestException:
+        pass
+    return None

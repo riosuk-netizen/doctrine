@@ -7,6 +7,20 @@
   <div>
     <a class="back" href="{{ url_for('index') }}">&larr; All doctrines</a>
     <h1>{{ d.name }}</h1>
+    <div class="byline">
+      {% if d.author %}
+        {% if d.author_id %}
+          <a class="author" href="https://zkillboard.com/character/{{ d.author_id }}/" target="_blank" rel="noopener" title="{{ d.author }} on zKillboard">
+            <img src="https://images.evetech.net/characters/{{ d.author_id }}/portrait?size=64" alt="" width="28" height="28" loading="lazy">
+            <span>By <strong>{{ d.author }}</strong></span>
+          </a>
+        {% else %}
+          <span class="author"><span>By <strong>{{ d.author }}</strong></span></span>
+        {% endif %}
+        <span class="byline-dot" aria-hidden="true">·</span>
+      {% endif %}
+      <span class="updated" title="{{ d.updated_at|ukdate }}">Updated {{ d.updated_at|ago }}</span>
+    </div>
     {% if d.description %}<div class="desc rich">{{ d.description|md }}</div>{% endif %}
   </div>
   <div class="doc-actions">

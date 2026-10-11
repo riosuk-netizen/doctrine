@@ -1,6 +1,7 @@
 import hmac
 import os
 import re
+from datetime import datetime, timezone
 from functools import wraps
 
 from flask import (Flask, Response, abort, flash, redirect, render_template,
@@ -13,7 +14,9 @@ from eft import (DISPLAY_ORDER, LABELS, EFTError, all_names, build_layout,
                  doctrine_xml, parse_fit, split_fits)
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from models import Doctrine, Fit, db
+from sqlalchemy import inspect, text
+
+from models import Doctrine, Fit, db, now
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # Render sits behind a proxy: keep links https
@@ -29,10 +32,57 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 db.init_app(app)
 with app.app_context():
     db.create_all()
+    # add columns that newer versions introduced to tables made by older ones
+    _cols = {c["name"] for c in inspect(db.engine).get_columns("doctrine")}
+    for _name, _sql in (("author", "VARCHAR(120) DEFAULT ''"), ("author_id", "INTEGER")):
+        if _name not in _cols:
+            try:
+                with db.engine.begin() as _conn:
+                    _conn.execute(text(f"ALTER TABLE doctrine ADD COLUMN {_name} {_sql}"))
+            except Exception:  # another worker got there first
+                pass
 
 IMG = "https://images.evetech.net/types"
 app.jinja_env.filters["md"] = markup.render
 app.jinja_env.filters["plain"] = markup.plain
+
+
+def _aware(dt):
+    return dt.replace(tzinfo=timezone.utc) if dt and dt.tzinfo is None else dt
+
+
+def ukdate(dt):
+    """11 Oct 2026"""
+    dt = _aware(dt)
+    return f"{dt.day} {dt:%b %Y}" if dt else ""
+
+
+def ago(dt):
+    """'just now', '5 minutes ago', '3 days ago', or the date once it's over a month."""
+    dt = _aware(dt)
+    if not dt:
+        return ""
+    secs = max(0, (datetime.now(timezone.utc) - dt).total_seconds())
+    for limit, size, unit in ((60, 1, None), (3600, 60, "minute"), (86400, 3600, "hour"), (86400 * 31, 86400, "day")):
+        if secs < limit:
+            if unit is None:
+                return "just now"
+            n = int(secs // size)
+            return f"{n} {unit}{'s' if n != 1 else ''} ago"
+    return f"on {ukdate(dt)}"
+
+
+app.jinja_env.filters["ukdate"] = ukdate
+app.jinja_env.filters["ago"] = ago
+
+
+def set_author(d, name):
+    name = (name or "").strip()[:120]
+    if name != (d.author or ""):
+        d.author = name
+        d.author_id = esi.character_id(name) if name else None
+    elif name and not d.author_id:
+        d.author_id = esi.character_id(name)
 
 
 # ---------- helpers ----------
@@ -151,6 +201,7 @@ def doctrine_new():
             flash("Give the doctrine a name.", "warn")
             return render_template("doctrine_form.html", d=None, form=request.form)
         d = Doctrine(name=name[:120], description=request.form.get("description", "").strip())
+        set_author(d, request.form.get("author", ""))
         db.session.add(d)
         n, errors = add_fits_from_text(d, request.form.get("eft", ""))
         if n == 0:
@@ -173,6 +224,8 @@ def doctrine_edit(did):
     if request.method == "POST":
         d.name = request.form.get("name", d.name).strip()[:120] or d.name
         d.description = request.form.get("description", "").strip()
+        set_author(d, request.form.get("author", ""))
+        d.updated_at = now()
         n, errors = (0, [])
         if request.form.get("eft", "").strip():
             n, errors = add_fits_from_text(d, request.form["eft"])
@@ -181,7 +234,7 @@ def doctrine_edit(did):
             flash(e, "warn")
         flash("Doctrine updated" + (f", {n} fit{'s' if n != 1 else ''} added." if n else "."), "ok")
         return redirect(url_for("doctrine", did=d.id))
-    return render_template("doctrine_form.html", d=d, form={"name": d.name, "description": d.description})
+    return render_template("doctrine_form.html", d=d, form={"name": d.name, "description": d.description, "author": d.author or ""})
 
 
 @app.post("/doctrine/<int:did>/delete")
@@ -209,7 +262,7 @@ def fit_edit(fid):
         f.name = request.form.get("name", "").strip()[:120] or p["name"][:120]
         f.role = request.form.get("role", "").strip()[:60]
         f.notes = request.form.get("notes", "").strip()
-        f.doctrine.updated_at = db.func.now()
+        f.doctrine.updated_at = now()
         db.session.commit()
         flash("Fit saved.", "ok")
         return redirect(url_for("doctrine", did=f.doctrine_id) + f"#fit-{f.id}")
@@ -227,6 +280,7 @@ def fit_move(fid, direction):
         fits[i], fits[j] = fits[j], fits[i]
         for pos, x in enumerate(fits):
             x.position = pos
+        f.doctrine.updated_at = now()
         db.session.commit()
     return redirect(url_for("doctrine", did=f.doctrine_id) + f"#fit-{f.id}")
 
@@ -236,6 +290,7 @@ def fit_move(fid, direction):
 def fit_delete(fid):
     f = db.get_or_404(Fit, fid)
     did = f.doctrine_id
+    f.doctrine.updated_at = now()
     db.session.delete(f)
     db.session.commit()
     flash(f"Removed {f.name}.", "ok")

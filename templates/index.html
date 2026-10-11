@@ -32,6 +32,10 @@
           <span class="count">{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}</span>
         </div>
         {% if d.description %}<p class="desc">{{ d.description|plain|truncate(140) }}</p>{% endif %}
+        <p class="card-meta">
+          {% if d.author %}{% if d.author_id %}<img src="https://images.evetech.net/characters/{{ d.author_id }}/portrait?size=32" alt="" width="20" height="20" loading="lazy">{% endif %}<span>By {{ d.author }}</span><span class="byline-dot" aria-hidden="true">·</span>{% endif %}
+          <span title="{{ d.updated_at|ukdate }}">Updated {{ d.updated_at|ago }}</span>
+        </p>
         <div class="hull-strip">
           {% for f in d.fits[:8] %}
             {% set sid = ship_ids.get(f.id) %}

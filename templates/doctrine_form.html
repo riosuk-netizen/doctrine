@@ -8,6 +8,9 @@
     <label>Doctrine name
       <input name="name" required maxlength="120" value="{{ form.get('name', '') }}" placeholder="e.g. Ferox Fleet">
     </label>
+    <label>Author <span class="hint">optional. Use the exact in-game character name and their portrait will show up.</span>
+      <input name="author" maxlength="120" value="{{ form.get('author', '') }}" placeholder="e.g. Xarasier Deninard" autocomplete="off">
+    </label>
     <label>Description <span class="hint">optional. Paste straight from Discord: **bold**, *italic*, `code`, - bullet lists, # headings and links all work.</span>
       <textarea name="description" rows="10">{{ form.get('description', '') }}</textarea>
     </label>

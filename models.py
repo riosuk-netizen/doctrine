@@ -13,6 +13,8 @@ class Doctrine(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, default="")
+    author = db.Column(db.String(120), default="")
+    author_id = db.Column(db.Integer)  # EVE character ID, for the portrait
     created_at = db.Column(db.DateTime, default=now)
     updated_at = db.Column(db.DateTime, default=now, onupdate=now)
     fits = db.relationship("Fit", backref="doctrine", cascade="all, delete-orphan",

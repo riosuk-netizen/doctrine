@@ -344,3 +344,13 @@ kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--line); bord
 .blue-box { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: #2f7fd6; box-shadow: 0 0 6px rgba(47,127,214,.6); vertical-align: -2px; margin: 0 2px; }
 .eve-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; vertical-align: middle; margin: -3px 2px 0; border-radius: 4px; background: #2a323e; color: #f2f5f8; }
 .eve-icon svg { width: 15px; height: 15px; }
+
+/* author and last updated */
+.byline { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 2px; color: var(--muted); font-size: .9rem; }
+.byline .author { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); text-decoration: none; }
+.byline .author strong { color: var(--text); font-weight: 600; }
+.byline a.author:hover strong { color: var(--accent-2); }
+.byline .author img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: #000; }
+.byline-dot { color: #3a4352; }
+.card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; color: var(--muted); font-size: .8rem; }
+.card-meta img { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); background: #000; }

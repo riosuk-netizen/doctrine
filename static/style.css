@@ -342,3 +342,4 @@ kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--line); bord
 .howto-skip input { width: auto; accent-color: var(--accent); }
 .nowrap { white-space: nowrap; }
 .blue-box { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: #2f7fd6; box-shadow: 0 0 6px rgba(47,127,214,.6); vertical-align: -2px; margin: 0 2px; }
+.eve-icon { display: inline-block; width: 26px; height: 26px; vertical-align: middle; margin: -4px 2px 0; border-radius: 3px; box-shadow: 0 0 0 1px rgba(110,170,220,.45), 0 0 10px rgba(80,150,210,.35); }

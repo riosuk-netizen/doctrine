@@ -24,7 +24,7 @@
   <meta name="twitter:description" content="{{ og_desc }}">
   <meta name="twitter:image" content="{{ url_for('static', filename='og-banner.png', _external=True) }}">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo-still.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ asset('style.css') }}">
 </head>
 <body>
   <header class="topbar">
@@ -72,8 +72,8 @@
       </div>
       <p class="howto-lead">Now paste it into EVE:</p>
       <ol class="howto-steps">
-        <li><b>1</b><span>In game, open the <strong>Fitting</strong> window. The shortcut is <span class="nowrap"><kbd>Alt</kbd> + <kbd>F</kbd></span>.</span></li>
-        <li><b>2</b><span>Click the small <strong>blue box</strong> <span class="blue-box" aria-hidden="true"></span> in the <strong>bottom left</strong> of the Fitting window. That's <strong>Import &amp; Export</strong>.</span></li>
+        <li><b>1</b><span>In game, open the <strong>Fitting</strong> window. The shortcut is <span class="nowrap"><kbd>Alt</kbd>&nbsp;+&nbsp;<kbd>F</kbd>.</span></span></li>
+        <li><b>2</b><span>In the <strong>bottom left</strong> of the Fitting window, next to <strong>Save As...</strong> and <strong>Browse</strong>, click the <strong>Import &amp; Export</strong> <span class="nowrap">button&nbsp;<img class="eve-icon" src="{{ url_for('static', filename='eve-import-icon.png') }}" alt="Import and Export button" width="26" height="26">.</span></span></li>
         <li><b>3</b><span>Choose <strong>Import from Clipboard</strong>. The fit is saved to your personal fittings.</span></li>
         <li><b>4</b><span>Open it to fit your ship, or use <strong>Buy All</strong> to grab anything you're missing from the market.</span></li>
       </ol>
@@ -84,7 +84,7 @@
       </div>
     </form>
   </dialog>
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ asset('app.js') }}"></script>
 {% if false %}{% block og_title %}{% endblock %}{% block og_desc %}{% endblock %}{% endif %}
 </body>
 </html>

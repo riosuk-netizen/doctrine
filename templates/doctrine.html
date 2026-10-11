@@ -39,7 +39,10 @@
       <header class="fit-title">
         <div>
           <h2>{{ f.name }}</h2>
-          <p class="ship">{{ f.ship }}{% if f.role %} <span class="role">{{ f.role }}</span>{% endif %}</p>
+          {% set S = skill_views.get(f.id) %}
+          <p class="ship">{{ f.ship }}{% if f.role %} <span class="role">{{ f.role }}</span>{% endif %}
+            {% if S and S.count and S.caps_known %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
+          </p>
         </div>
         <div class="fit-buttons">
           <button class="btn btn-primary copy-btn" type="button" data-copy="eft-{{ f.id }}">Copy for EVE</button>
@@ -54,6 +57,13 @@
 
       {% if f.notes %}<p class="notes">{{ f.notes }}</p>{% endif %}
 
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="slots-{{ f.id }}">Fit</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="skills-{{ f.id }}">Required skills{% if S and S.count %} <span class="tab-count">{{ S.count }}</span>{% endif %}</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="list-{{ f.id }}">Module list</button>
+      </div>
+
+      <div class="tab-panel" id="slots-{{ f.id }}" role="tabpanel">
       <div class="slots">
         {% for kind in ORDER %}{% set items = L.groups[kind] %}
           {% if items %}
@@ -83,9 +93,41 @@
       {% if L.unknown %}
         <p class="warn-line">Couldn't find icons for: {{ L.unknown|join(', ') }}. Check the spelling in the fit.</p>
       {% endif %}
+      </div>
 
-      <details class="module-list">
-        <summary>Module list</summary>
+      <div class="tab-panel" id="skills-{{ f.id }}" role="tabpanel" hidden>
+        {% if S and S.count %}
+          <div class="skill-head">
+            <p class="skill-note">These are the <strong>bare minimum</strong> skills to fly this fit, including prerequisites. Extra levels will make it perform better.</p>
+            <button class="btn copy-btn" type="button" data-copy="plan-{{ f.id }}" data-toast="Skill plan copied. In EVE: Skills window > Skill Plans > Import from Clipboard">Copy as skill plan</button>
+          </div>
+          <div class="skill-groups">
+            {% for g in S.groups %}
+              <div class="skill-group">
+                <h4>{{ g.name }}</h4>
+                {% for sk in g.skills %}
+                  <div class="skill-row{% if sk.omega %} is-omega{% endif %}">
+                    <span class="skill-name">{{ sk.name }}</span>
+                    <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
+                      {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="legend">
+            <span><i class="pip"></i> Not required</span>
+            <span><i class="pip on"></i> Required</span>
+            {% if S.caps_known %}<span><i class="pip omega"></i> Requires Omega</span>{% else %}<span class="muted">Alpha limits unavailable right now</span>{% endif %}
+          </div>
+          <textarea id="plan-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ S.plan }}</textarea>
+        {% else %}
+          <p class="skill-note">Skill data isn't available right now. Refresh in a minute.</p>
+        {% endif %}
+      </div>
+
+      <div class="tab-panel" id="list-{{ f.id }}" role="tabpanel" hidden>
         <div class="list-cols">
         {% for kind in ORDER %}{% set items = L.groups[kind] %}
           {% if items %}
@@ -104,7 +146,7 @@
         {% endfor %}
         </div>
         <pre class="eft-raw">{{ f.eft }}</pre>
-      </details>
+      </div>
       <textarea id="eft-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ f.eft }}</textarea>
     </div>
   </article>

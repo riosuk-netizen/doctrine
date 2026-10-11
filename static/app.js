@@ -34,11 +34,25 @@
       const label = btn.textContent;
       btn.classList.add("copied");
       btn.textContent = "Copied!";
-      showToast("Fit copied. In EVE: Fitting window > Import & Export > Import from Clipboard");
+      showToast(btn.dataset.toast || "Fit copied. In EVE: Fitting window > Import & Export > Import from Clipboard");
       setTimeout(() => { btn.classList.remove("copied"); btn.textContent = label; }, 1800);
     } else {
       showToast("Couldn't copy automatically. Open Module list and copy the text by hand.");
     }
+  });
+
+  // Fit card tabs: Fit / Required skills / Module list
+  document.addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab[data-tab]");
+    if (!tab) return;
+    const card = tab.closest(".fit");
+    card.querySelectorAll(".tab").forEach((t) => {
+      const on = t === tab;
+      t.classList.toggle("active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      const panel = document.getElementById(t.dataset.tab);
+      if (panel) panel.hidden = !on;
+    });
   });
 
   // Tap a module tile on touch screens to see its name

@@ -8,8 +8,8 @@
     <label>Doctrine name
       <input name="name" required maxlength="120" value="{{ form.get('name', '') }}" placeholder="e.g. Ferox Fleet">
     </label>
-    <label>Description <span class="hint">optional: when to use it, skills needed, comms channel</span>
-      <textarea name="description" rows="3">{{ form.get('description', '') }}</textarea>
+    <label>Description <span class="hint">optional. Paste straight from Discord: **bold**, *italic*, `code`, - bullet lists, # headings and links all work.</span>
+      <textarea name="description" rows="10">{{ form.get('description', '') }}</textarea>
     </label>
     <label>{{ 'Add more fits' if d else 'Fits' }} <span class="hint">paste one or more EFT fits. In game: Fitting window, pick the fit, Copy to Clipboard. Pyfa: Export &gt; EFT.</span>
       <textarea name="eft" rows="16" class="mono" placeholder="[Ferox, Ferox Fleet (DPS)]&#10;Damage Control II&#10;Magnetic Field Stabilizer II&#10;...&#10;&#10;[Scimitar, Scimitar Logi (Logi)]&#10;...">{{ form.get('eft', '') }}</textarea>

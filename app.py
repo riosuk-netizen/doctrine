@@ -7,6 +7,7 @@ from flask import (Flask, Response, abort, flash, redirect, render_template,
                    request, session, url_for)
 
 import esi
+import markup
 import skills
 from eft import (DISPLAY_ORDER, LABELS, EFTError, all_names, build_layout,
                  doctrine_xml, parse_fit, split_fits)
@@ -30,6 +31,8 @@ with app.app_context():
     db.create_all()
 
 IMG = "https://images.evetech.net/types"
+app.jinja_env.filters["md"] = markup.render
+app.jinja_env.filters["plain"] = markup.plain
 
 
 # ---------- helpers ----------

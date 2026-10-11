@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
 {% block og_title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
-{% block og_desc %}{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}: {{ d.fits|map(attribute='ship')|unique|join(', ')|truncate(150) }}{% if d.description %}. {{ d.description|truncate(140) }}{% endif %}{% endblock %}
+{% block og_desc %}{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}: {{ d.fits|map(attribute='ship')|unique|join(', ')|truncate(150) }}{% if d.description %}. {{ d.description|plain|truncate(140) }}{% endif %}{% endblock %}
 {% block content %}
 <section class="doc-head">
   <div>
     <a class="back" href="{{ url_for('index') }}">&larr; All doctrines</a>
     <h1>{{ d.name }}</h1>
-    {% if d.description %}<p class="desc">{{ d.description }}</p>{% endif %}
+    {% if d.description %}<div class="desc rich">{{ d.description|md }}</div>{% endif %}
   </div>
   <div class="doc-actions">
     {% if d.fits %}<a class="btn" href="{{ url_for('doctrine_export', did=d.id) }}" title="Import every fit at once via Import & Export > Import from File">Download all (XML)</a>{% endif %}
@@ -57,7 +57,7 @@
         </div>
       </header>
 
-      {% if f.notes %}<p class="notes">{{ f.notes }}</p>{% endif %}
+      {% if f.notes %}<div class="notes rich">{{ f.notes|md }}</div>{% endif %}
 
       <div class="tabs" role="tablist">
         <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="slots-{{ f.id }}">Fit</button>

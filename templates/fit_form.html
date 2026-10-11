@@ -9,7 +9,7 @@
       <label>Fit name <input name="name" maxlength="120" value="{{ form.get('name', '') }}"></label>
       <label>Role tag <input name="role" maxlength="60" value="{{ form.get('role', '') }}" placeholder="DPS, Logi, Tackle..."></label>
     </div>
-    <label>Notes <span class="hint">optional: skills, piloting tips, alternatives</span>
+    <label>Notes <span class="hint">optional: skills, piloting tips, alternatives. Discord formatting works here too.</span>
       <textarea name="notes" rows="3">{{ form.get('notes', '') }}</textarea>
     </label>
     <label>EFT

@@ -45,7 +45,8 @@ code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 1.35rem; font-weight: 700; color: var(--text); text-decoration: none; text-transform: uppercase; }
-.brand-mark { width: 18px; height: 18px; border: 2px solid var(--accent); transform: rotate(45deg); box-shadow: 0 0 12px rgba(232,163,60,.5); }
+.brand-logo img { display: block; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 0 0 1px var(--line), 0 0 14px rgba(255,255,255,.08); }
+.brand-sub { color: var(--muted); font-weight: 600; }
 .topbar nav { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .banner { background: #3a2a10; color: var(--accent-2); text-align: center; padding: 8px 16px; font-size: .9rem; border-bottom: 1px solid #5a4018; }
@@ -76,7 +77,21 @@ form { margin: 0; }
 .flash-warn { background: #2a1f0e; border-color: #5a4018; color: var(--accent-2); }
 
 /* index */
-.hero p { color: var(--muted); max-width: 70ch; margin: 0 0 24px; }
+.hero {
+  display: flex; align-items: center; gap: 28px; margin-bottom: 28px; padding: 24px;
+  background: linear-gradient(135deg, rgba(255,255,255,.03), transparent 60%), var(--bg-2);
+  border: 1px solid var(--line); border-radius: var(--radius);
+}
+.hero-logo img {
+  display: block; width: 160px; height: 160px; border-radius: 50%; flex: none;
+  box-shadow: 0 0 0 1px var(--line), 0 0 40px rgba(255,255,255,.08), 0 0 80px rgba(232,163,60,.08);
+}
+.hero-text h1 { font-size: 2.6rem; line-height: 1; margin: 0 0 10px; text-transform: uppercase; }
+.hero-text p { color: var(--muted); max-width: 68ch; margin: 0; }
+.eyebrow { font: 600 .8rem "Inter", sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--accent) !important; margin-bottom: 4px !important; }
+.how-to { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.step { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); font-size: .85rem; }
+.step b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #1a1205; font-size: .75rem; }
 .doctrine-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
 .doctrine-card {
   display: flex; flex-direction: column; gap: 10px; padding: 18px;
@@ -211,5 +226,10 @@ textarea { resize: vertical; }
   .tile { width: 46px; height: 46px; }
   .two-col { grid-template-columns: 1fr; }
   .brand { font-size: 1.1rem; }
+  .brand-sub { display: none; }
+  .hero { flex-direction: column; text-align: center; padding: 20px 16px; gap: 16px; }
+  .hero-logo img { width: 120px; height: 120px; }
+  .hero-text h1 { font-size: 2rem; }
+  .how-to { justify-content: center; }
   .fit-buttons .copy-btn { flex: 1 1 100%; }
 }

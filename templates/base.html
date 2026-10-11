@@ -3,14 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Doctrine Vault{% endblock %}</title>
+  <title>{% block title %}Rift Watch Fleet Doctrines{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo-still.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark"></span>Doctrine Vault</a>
+    <a class="brand" href="{{ url_for('index') }}">
+      <picture class="brand-logo">
+        <source srcset="{{ url_for('static', filename='logo-still.png') }}" media="(prefers-reduced-motion: reduce)">
+        <img src="{{ url_for('static', filename='logo.gif') }}" alt="Rift Watch logo" width="40" height="40">
+      </picture>
+      <span>Rift Watch <span class="brand-sub">Fleet Doctrines</span></span>
+    </a>
     <nav>
       {% if is_admin %}
         <a class="btn btn-primary" href="{{ url_for('doctrine_new') }}">+ New doctrine</a>

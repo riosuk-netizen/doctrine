@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ 'Edit ' ~ d.name if d else 'New doctrine' }} · Doctrine Vault{% endblock %}
+{% block title %}{{ 'Edit ' ~ d.name if d else 'New doctrine' }} · Rift Watch Fleet Doctrines{% endblock %}
 {% block content %}
 <section class="form-page">
   <a class="back" href="{{ url_for('doctrine', did=d.id) if d else url_for('index') }}">&larr; Back</a>

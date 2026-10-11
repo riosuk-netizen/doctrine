@@ -1,8 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="hero">
-  <h1>Corp doctrines</h1>
-  <p>Pick a doctrine, hit <strong>Copy for EVE</strong> on a fit, then in game open the Fitting window and choose <em>Import &amp; Export &gt; Import from Clipboard</em>.</p>
+  <picture class="hero-logo">
+    <source srcset="{{ url_for('static', filename='logo-still.png') }}" media="(prefers-reduced-motion: reduce)">
+    <img src="{{ url_for('static', filename='logo.gif') }}" alt="Rift Watch logo" width="160" height="160">
+  </picture>
+  <div class="hero-text">
+    <p class="eyebrow">Rift Watch</p>
+    <h1>Fleet Doctrines</h1>
+    <p>Welcome to the Rift Watch fleet doctrine site. Every ship we fly as a fleet lives here, with the approved fit, the role it plays and the modules you need. Find the doctrine for the next op, copy the fit straight into EVE and have it sorted in your hangar before form-up. Not sure what to bring? Ask in fleet comms before you undock.</p>
+    <div class="how-to">
+      <span class="step"><b>1</b> Pick a doctrine</span>
+      <span class="step"><b>2</b> Hit Copy for EVE on a fit</span>
+      <span class="step"><b>3</b> In game: Fitting window &gt; Import &amp; Export &gt; Import from Clipboard</span>
+    </div>
+  </div>
 </section>
 
 {% if not doctrines %}

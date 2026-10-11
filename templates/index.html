@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <h1>Corp doctrines</h1>
+  <p>Pick a doctrine, hit <strong>Copy for EVE</strong> on a fit, then in game open the Fitting window and choose <em>Import &amp; Export &gt; Import from Clipboard</em>.</p>
+</section>
+
+{% if not doctrines %}
+  <div class="empty-state">
+    <h2>No doctrines yet</h2>
+    <p>Paste your EFT fits in to build the first one.</p>
+    {% if is_admin %}<a class="btn btn-primary" href="{{ url_for('doctrine_new') }}">Create a doctrine</a>{% endif %}
+  </div>
+{% else %}
+  <div class="doctrine-grid">
+    {% for d in doctrines %}
+      <a class="doctrine-card" href="{{ url_for('doctrine', did=d.id) }}">
+        <div class="card-top">
+          <h2>{{ d.name }}</h2>
+          <span class="count">{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}</span>
+        </div>
+        {% if d.description %}<p class="desc">{{ d.description|truncate(140) }}</p>{% endif %}
+        <div class="hull-strip">
+          {% for f in d.fits[:8] %}
+            {% set sid = ship_ids.get(f.id) %}
+            {% if sid %}<img src="{{ icon(sid, 64) }}" alt="{{ f.ship }}" title="{{ f.ship }} · {{ f.name }}" loading="lazy">
+            {% else %}<span class="hull-missing" title="{{ f.ship }}">?</span>{% endif %}
+          {% endfor %}
+          {% if d.fits|length > 8 %}<span class="more">+{{ d.fits|length - 8 }}</span>{% endif %}
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

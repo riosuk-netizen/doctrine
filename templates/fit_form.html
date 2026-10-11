@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ f.name }} · Doctrine Vault{% endblock %}
+{% block content %}
+<section class="form-page">
+  <a class="back" href="{{ url_for('doctrine', did=f.doctrine_id) }}#fit-{{ f.id }}">&larr; Back to {{ f.doctrine.name }}</a>
+  <h1>Edit fit</h1>
+  <form method="post" class="panel">
+    <div class="two-col">
+      <label>Fit name <input name="name" maxlength="120" value="{{ form.get('name', '') }}"></label>
+      <label>Role tag <input name="role" maxlength="60" value="{{ form.get('role', '') }}" placeholder="DPS, Logi, Tackle..."></label>
+    </div>
+    <label>Notes <span class="hint">optional: skills, piloting tips, alternatives</span>
+      <textarea name="notes" rows="3">{{ form.get('notes', '') }}</textarea>
+    </label>
+    <label>EFT
+      <textarea name="eft" rows="18" class="mono" required>{{ form.get('eft', '') }}</textarea>
+    </label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Save fit</button></div>
+  </form>
+</section>
+{% endblock %}

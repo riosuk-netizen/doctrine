@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit ' ~ d.name if d else 'New doctrine' }} · Rift Watch Fleet Doctrines{% endblock %}
+{% block content %}
+<section class="form-page">
+  <a class="back" href="{{ url_for('doctrine', did=d.id) if d else url_for('index') }}">&larr; Back</a>
+  <h1>{{ 'Edit ' ~ d.name if d else 'New doctrine' }}</h1>
+  <form method="post" class="panel">
+    <label>Doctrine name
+      <input name="name" required maxlength="120" value="{{ form.get('name', '') }}" placeholder="e.g. Ferox Fleet">
+    </label>
+    <label>Description <span class="hint">optional: when to use it, skills needed, comms channel</span>
+      <textarea name="description" rows="3">{{ form.get('description', '') }}</textarea>
+    </label>
+    <label>{{ 'Add more fits' if d else 'Fits' }} <span class="hint">paste one or more EFT fits. In game: Fitting window, pick the fit, Copy to Clipboard. Pyfa: Export &gt; EFT.</span>
+      <textarea name="eft" rows="16" class="mono" placeholder="[Ferox, Ferox Fleet (DPS)]&#10;Damage Control II&#10;Magnetic Field Stabilizer II&#10;...&#10;&#10;[Scimitar, Scimitar Logi (Logi)]&#10;...">{{ form.get('eft', '') }}</textarea>
+    </label>
+    <p class="hint">Tip: put the role in brackets at the end of the fit name, like <code>(Logi)</code> or <code>(Tackle)</code>, and it becomes a role tag.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ 'Save' if d else 'Create doctrine' }}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

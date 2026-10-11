@@ -7,6 +7,7 @@ from flask import (Flask, Response, abort, flash, redirect, render_template,
                    request, session, url_for)
 
 import esi
+import skills
 from eft import (DISPLAY_ORDER, LABELS, EFTError, all_names, build_layout,
                  doctrine_xml, parse_fit, split_fits)
 from models import Doctrine, Fit, db
@@ -113,7 +114,8 @@ def index():
 @app.route("/doctrine/<int:did>")
 def doctrine(did):
     d = db.get_or_404(Doctrine, did)
-    return render_template("doctrine.html", d=d, layouts=layouts_for(d.fits))
+    layouts = layouts_for(d.fits)
+    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts))
 
 
 @app.route("/doctrine/<int:did>/xml")

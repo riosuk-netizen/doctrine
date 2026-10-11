@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <picture class="hero-logo">
+    <source srcset="{{ url_for('static', filename='logo-still.png') }}" media="(prefers-reduced-motion: reduce)">
+    <img src="{{ url_for('static', filename='logo.gif') }}" alt="Rift Watch logo" width="160" height="160">
+  </picture>
+  <div class="hero-text">
+    <p class="eyebrow">Rift Watch</p>
+    <h1>Fleet Doctrines</h1>
+    <p>Welcome to the Rift Watch fleet doctrine site. Every ship we fly as a fleet lives here, with the approved fit, the role it plays and the modules you need. Find the doctrine for the next op, copy the fit straight into EVE and have it sorted in your hangar before form-up. Not sure what to bring? Ask in fleet comms before you undock.</p>
+    <div class="how-to">
+      <span class="step"><b>1</b> Pick a doctrine</span>
+      <span class="step"><b>2</b> Hit Copy for EVE on a fit</span>
+      <span class="step"><b>3</b> In game: Fitting window &gt; Import &amp; Export &gt; Import from Clipboard</span>
+    </div>
+  </div>
+</section>
+
+{% if not doctrines %}
+  <div class="empty-state">
+    <h2>No doctrines yet</h2>
+    <p>Paste your EFT fits in to build the first one.</p>
+    {% if is_admin %}<a class="btn btn-primary" href="{{ url_for('doctrine_new') }}">Create a doctrine</a>{% endif %}
+  </div>
+{% else %}
+  <div class="doctrine-grid">
+    {% for d in doctrines %}
+      <a class="doctrine-card" href="{{ url_for('doctrine', did=d.id) }}">
+        <div class="card-top">
+          <h2>{{ d.name }}</h2>
+          <span class="count">{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}</span>
+        </div>
+        {% if d.description %}<p class="desc">{{ d.description|truncate(140) }}</p>{% endif %}
+        <div class="hull-strip">
+          {% for f in d.fits[:8] %}
+            {% set sid = ship_ids.get(f.id) %}
+            {% if sid %}<img src="{{ icon(sid, 64) }}" alt="{{ f.ship }}" title="{{ f.ship }} · {{ f.name }}" loading="lazy">
+            {% else %}<span class="hull-missing" title="{{ f.ship }}">?</span>{% endif %}
+          {% endfor %}
+          {% if d.fits|length > 8 %}<span class="more">+{{ d.fits|length - 8 }}</span>{% endif %}
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}

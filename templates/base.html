@@ -59,6 +59,31 @@
     {% block content %}{% endblock %}
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="howto" class="howto" aria-labelledby="howto-title">
+    <form method="dialog" class="howto-inner">
+      <div class="howto-head">
+        <span class="howto-tick" aria-hidden="true">&#10003;</span>
+        <div>
+          <h2 id="howto-title">Fit copied</h2>
+          <p class="howto-fit" id="howto-fit"></p>
+        </div>
+        <button class="howto-x" value="close" aria-label="Close">&times;</button>
+      </div>
+      <p class="howto-lead">Now paste it into EVE:</p>
+      <ol class="howto-steps">
+        <li><b>1</b><span>In game, open the <strong>Fitting</strong> window. The shortcut is <span class="nowrap"><kbd>Alt</kbd> + <kbd>F</kbd></span>.</span></li>
+        <li><b>2</b><span>Click the small <strong>blue box</strong> <span class="blue-box" aria-hidden="true"></span> in the <strong>bottom left</strong> of the Fitting window. That's <strong>Import &amp; Export</strong>.</span></li>
+        <li><b>3</b><span>Choose <strong>Import from Clipboard</strong>. The fit is saved to your personal fittings.</span></li>
+        <li><b>4</b><span>Open it to fit your ship, or use <strong>Buy All</strong> to grab anything you're missing from the market.</span></li>
+      </ol>
+      <p class="howto-tip">Tip: import it before you copy anything else, or the fit will be replaced on your clipboard.</p>
+      <div class="howto-foot">
+        <label class="howto-skip"><input type="checkbox" id="howto-skip"> Don't show this again</label>
+        <button class="btn btn-primary" value="close" autofocus>Got it</button>
+      </div>
+    </form>
+  </dialog>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 {% if false %}{% block og_title %}{% endblock %}{% block og_desc %}{% endblock %}{% endif %}
 </body>

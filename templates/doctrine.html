@@ -47,7 +47,7 @@
           </p>
         </div>
         <div class="fit-buttons">
-          <button class="btn btn-primary copy-btn" type="button" data-copy="eft-{{ f.id }}">Copy for EVE</button>
+          <button class="btn btn-primary copy-btn" type="button" data-copy="eft-{{ f.id }}" data-howto="fit" data-fitname="{{ f.name }}">Copy for EVE</button>
           {% if is_admin %}
             <a class="btn btn-ghost" href="{{ url_for('fit_edit', fid=f.id) }}">Edit</a>
             <form method="post" action="{{ url_for('fit_move', fid=f.id, direction='up') }}"><button class="btn btn-ghost icon-btn" title="Move up" {% if loop.first %}disabled{% endif %}>&uarr;</button></form>

@@ -59,7 +59,15 @@ def inject():
     def render_img(type_id, size=256):
         return f"{IMG}/{type_id}/render?size={size}"
 
-    return {"is_admin": is_admin(), "open_mode": not ADMIN_PASSWORD, "icon": icon,
+    def asset(filename):
+        """Static file URL stamped with the file's age, so browsers fetch fresh copies after each deploy."""
+        try:
+            v = int(os.path.getmtime(os.path.join(app.static_folder, filename)))
+        except OSError:
+            v = 0
+        return url_for("static", filename=filename, v=v)
+
+    return {"asset": asset, "is_admin": is_admin(), "open_mode": not ADMIN_PASSWORD, "icon": icon,
             "render_img": render_img, "ORDER": DISPLAY_ORDER, "LABELS": LABELS}
 
 

@@ -7,7 +7,7 @@
   <form method="post" class="panel">
     <div class="two-col">
       <label>Fit name <input name="name" maxlength="120" value="{{ form.get('name', '') }}"></label>
-      <label>Role tag <input name="role" maxlength="60" value="{{ form.get('role', '') }}" placeholder="DPS, Logi, Tackle..."></label>
+      <label>Role tags <span class="hint">separate with commas for more than one</span> <input name="role" maxlength="60" value="{{ form.get('role', '') }}" placeholder="DPS, Logi, Tackle..."></label>
     </div>
     <label>Notes <span class="hint">optional: skills, piloting tips, alternatives. Discord formatting works here too.</span>
       <textarea name="notes" rows="3">{{ form.get('notes', '') }}</textarea>

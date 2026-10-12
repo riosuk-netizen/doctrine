@@ -56,7 +56,7 @@
         <div>
           <h2>{{ f.name }}</h2>
           {% set S = skill_views.get(f.id) %}
-          <p class="ship">{{ f.ship }}{% if f.role %} <span class="role">{{ f.role }}</span>{% endif %}
+          <p class="ship">{{ f.ship }}{% for tag in f.role|tags %} <span class="role">{{ tag }}</span>{% endfor %}
             {% if S and S.count and S.caps_known %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
           </p>
         </div>

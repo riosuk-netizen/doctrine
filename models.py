@@ -37,6 +37,7 @@ class TypeReqs(db.Model):
     type_id = db.Column(db.Integer, primary_key=True)
     reqs = db.Column(db.Text, nullable=False, default="{}")
     meta_group = db.Column(db.Integer)  # EVE meta group (2 = Tech II, 4 = Faction...), 0 = none, NULL = not checked yet
+    reqs_pending = db.Column(db.Boolean, default=False)  # row made by the meta lookup; skills still to fetch
 
 
 class SkillInfo(db.Model):

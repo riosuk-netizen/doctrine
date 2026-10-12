@@ -76,6 +76,35 @@ def meta_from_dogma(attrs):
     return 0
 
 
+REF_DATA = "https://ref-data.everef.net/types"
+
+
+def _meta_lookup(type_id):
+    """Meta group for one type (0 = plain Tech I). EVE Ref first, CCP's ESI as a fallback.
+    Raises if neither source answers, so nothing wrong gets cached."""
+    try:
+        r = session.get(f"{REF_DATA}/{type_id}", timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if data.get("meta_group_id") is not None:
+            return int(data["meta_group_id"])
+        if int(data.get("tech_level") or 1) == 2:
+            return 2
+        meta = meta_from_dogma([{"attribute_id": int(k), "value": v.get("value") if isinstance(v, dict) else v}
+                                for k, v in (data.get("dogma_attributes") or {}).items()])
+        if meta:
+            return meta
+    except (requests.RequestException, ValueError, AttributeError, TypeError):
+        pass
+    data = _get_type(type_id)  # raises on failure
+    attrs = data.get("dogma_attributes") or []
+    meta = meta_from_dogma(attrs)
+    if not meta:
+        tech = next((int(a["value"]) for a in attrs if a.get("attribute_id") == 422), 1)  # techLevel
+        meta = 2 if tech == 2 else (14 if tech == 3 else 0)
+    return meta
+
+
 def meta_groups(type_ids):
     """{type_id: meta group} (0 = plain Tech I / none), cached alongside skill requirements."""
     ids = {t for t in type_ids if t}
@@ -83,15 +112,13 @@ def meta_groups(type_ids):
         return {}
     rows = {r.type_id: r for r in TypeReqs.query.filter(TypeReqs.type_id.in_(ids)).all()}
     out = {tid: r.meta_group for tid, r in rows.items() if r.meta_group is not None}
-    fetched = _fetch_many(_get_type, ids - out.keys())
-    for tid, data in fetched.items():
-        attrs = data.get("dogma_attributes")
-        meta = meta_from_dogma(attrs)
+    fetched = _fetch_many(_meta_lookup, ids - out.keys())
+    for tid, meta in fetched.items():
         row = rows.get(tid)
         if row:
             row.meta_group = meta
         else:
-            db.session.add(TypeReqs(type_id=tid, reqs=json.dumps(reqs_from_dogma(attrs)), meta_group=meta))
+            db.session.add(TypeReqs(type_id=tid, reqs="{}", meta_group=meta, reqs_pending=True))
         out[tid] = meta
     if fetched:
         db.session.commit()
@@ -101,11 +128,16 @@ def meta_groups(type_ids):
 def type_reqs(type_ids):
     """{type_id: {skill_id: level}} for items, cached."""
     ids = {t for t in type_ids if t}
-    have = {r.type_id: _int_keys(json.loads(r.reqs)) for r in TypeReqs.query.filter(TypeReqs.type_id.in_(ids)).all()} if ids else {}
+    have = {r.type_id: _int_keys(json.loads(r.reqs)) for r in TypeReqs.query.filter(TypeReqs.type_id.in_(ids)).all()
+            if not r.reqs_pending} if ids else {}
     fetched = _fetch_many(_get_type, ids - have.keys())
     for tid, data in fetched.items():
         reqs = reqs_from_dogma(data.get("dogma_attributes"))
-        db.session.merge(TypeReqs(type_id=tid, reqs=json.dumps(reqs), meta_group=meta_from_dogma(data.get("dogma_attributes"))))
+        row = db.session.get(TypeReqs, tid)
+        if row:
+            row.reqs, row.reqs_pending = json.dumps(reqs), False
+        else:
+            db.session.add(TypeReqs(type_id=tid, reqs=json.dumps(reqs)))
         have[tid] = reqs
     if fetched:
         db.session.commit()

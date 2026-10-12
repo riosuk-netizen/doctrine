@@ -37,6 +37,7 @@ with app.app_context():
         ("doctrine", "author", "VARCHAR(120) DEFAULT ''"),
         ("doctrine", "author_id", "INTEGER"),
         ("type_reqs", "meta_group", "INTEGER"),
+        ("type_reqs", "reqs_pending", "BOOLEAN DEFAULT FALSE"),
     )
     for _table, _name, _sql in _new_cols:
         if _name not in {c["name"] for c in inspect(db.engine).get_columns(_table)}:
@@ -45,6 +46,14 @@ with app.app_context():
                     _conn.execute(text(f"ALTER TABLE {_table} ADD COLUMN {_name} {_sql}"))
             except Exception:  # another worker got there first
                 pass
+    # one-off: forget tech/faction results saved by the first version, which missed Navy ships
+    try:
+        with db.engine.begin() as _conn:
+            if not _conn.execute(text("SELECT 1 FROM kv WHERE key = 'meta_cache_v2'")).first():
+                _conn.execute(text("UPDATE type_reqs SET meta_group = NULL"))
+                _conn.execute(text("INSERT INTO kv (key, value, updated_at) VALUES ('meta_cache_v2', '1', CURRENT_TIMESTAMP)"))
+    except Exception:  # another worker did it first
+        pass
 
 IMG = "https://images.evetech.net/types"
 app.jinja_env.filters["md"] = markup.render

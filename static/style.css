@@ -371,3 +371,16 @@ html { scrollbar-color: #2a3444 var(--bg); }
   box-shadow: 0 0 0 4px rgba(255,255,255,.02), 0 12px 30px rgba(0,0,0,.45);
 }
 div.hull-render { border-radius: 12px; }
+
+/* sharp render in the square, with EVE's own tech / faction corner mark on top */
+.hull-wrap { position: relative; width: 200px; height: 200px; flex: none; border-radius: 12px; overflow: hidden; }
+.hull-wrap .hull-render { display: block; width: 100%; height: 100%; }
+.hull-badge {
+  position: absolute; top: 0; left: 0; width: 33px; height: 33px; pointer-events: none;
+  background-repeat: no-repeat; background-position: 0 0; background-size: 147px 147px; /* the 64px icon at 2.3x; 33px shows its ~14.5px corner mark */
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+@media (max-width: 720px) {
+  .hull-wrap { width: 140px; height: 140px; }
+  .hull-badge { width: 26px; height: 26px; background-size: 115px 115px; }
+}

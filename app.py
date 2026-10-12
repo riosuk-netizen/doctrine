@@ -33,12 +33,16 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
     # add columns that newer versions introduced to tables made by older ones
-    _cols = {c["name"] for c in inspect(db.engine).get_columns("doctrine")}
-    for _name, _sql in (("author", "VARCHAR(120) DEFAULT ''"), ("author_id", "INTEGER")):
-        if _name not in _cols:
+    _new_cols = (
+        ("doctrine", "author", "VARCHAR(120) DEFAULT ''"),
+        ("doctrine", "author_id", "INTEGER"),
+        ("type_reqs", "meta_group", "INTEGER"),
+    )
+    for _table, _name, _sql in _new_cols:
+        if _name not in {c["name"] for c in inspect(db.engine).get_columns(_table)}:
             try:
                 with db.engine.begin() as _conn:
-                    _conn.execute(text(f"ALTER TABLE doctrine ADD COLUMN {_name} {_sql}"))
+                    _conn.execute(text(f"ALTER TABLE {_table} ADD COLUMN {_name} {_sql}"))
             except Exception:  # another worker got there first
                 pass
 
@@ -180,7 +184,9 @@ def index():
 def doctrine(did):
     d = db.get_or_404(Doctrine, did)
     layouts = layouts_for(d.fits)
-    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts))
+    ship_meta = skills.meta_groups({L["ship_id"] for L in layouts.values()})
+    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts),
+                           ship_meta=ship_meta)
 
 
 @app.route("/doctrine/<int:did>/xml")

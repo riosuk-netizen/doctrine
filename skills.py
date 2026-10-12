@@ -66,6 +66,38 @@ def _fetch_many(fn, keys):
         return {k: v for k, v in ex.map(safe, keys) if v is not None}
 
 
+META_GROUP_ATTR = 1692  # metaGroupID dogma attribute
+
+
+def meta_from_dogma(attrs):
+    for a in attrs or []:
+        if a.get("attribute_id") == META_GROUP_ATTR:
+            return int(a.get("value") or 0)
+    return 0
+
+
+def meta_groups(type_ids):
+    """{type_id: meta group} (0 = plain Tech I / none), cached alongside skill requirements."""
+    ids = {t for t in type_ids if t}
+    if not ids:
+        return {}
+    rows = {r.type_id: r for r in TypeReqs.query.filter(TypeReqs.type_id.in_(ids)).all()}
+    out = {tid: r.meta_group for tid, r in rows.items() if r.meta_group is not None}
+    fetched = _fetch_many(_get_type, ids - out.keys())
+    for tid, data in fetched.items():
+        attrs = data.get("dogma_attributes")
+        meta = meta_from_dogma(attrs)
+        row = rows.get(tid)
+        if row:
+            row.meta_group = meta
+        else:
+            db.session.add(TypeReqs(type_id=tid, reqs=json.dumps(reqs_from_dogma(attrs)), meta_group=meta))
+        out[tid] = meta
+    if fetched:
+        db.session.commit()
+    return out
+
+
 def type_reqs(type_ids):
     """{type_id: {skill_id: level}} for items, cached."""
     ids = {t for t in type_ids if t}
@@ -73,7 +105,7 @@ def type_reqs(type_ids):
     fetched = _fetch_many(_get_type, ids - have.keys())
     for tid, data in fetched.items():
         reqs = reqs_from_dogma(data.get("dogma_attributes"))
-        db.session.merge(TypeReqs(type_id=tid, reqs=json.dumps(reqs)))
+        db.session.merge(TypeReqs(type_id=tid, reqs=json.dumps(reqs), meta_group=meta_from_dogma(data.get("dogma_attributes"))))
         have[tid] = reqs
     if fetched:
         db.session.commit()

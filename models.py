@@ -36,6 +36,7 @@ class TypeReqs(db.Model):
     """Skills a type directly needs, as JSON {skill_id: level}."""
     type_id = db.Column(db.Integer, primary_key=True)
     reqs = db.Column(db.Text, nullable=False, default="{}")
+    meta_group = db.Column(db.Integer)  # EVE meta group (2 = Tech II, 4 = Faction...), 0 = none, NULL = not checked yet
 
 
 class SkillInfo(db.Model):

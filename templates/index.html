@@ -39,7 +39,7 @@
         <div class="hull-strip">
           {% for f in d.fits[:8] %}
             {% set sid = ship_ids.get(f.id) %}
-            {% if sid %}<img src="{{ icon(sid, 64) }}" alt="{{ f.ship }}" title="{{ f.ship }} · {{ f.name }}" loading="lazy">
+            {% if sid %}{% set m = ship_meta.get(sid, 0) %}<span class="hull-thumb" title="{{ f.ship }} · {{ f.name }}{% if m in META_NAMES %} ({{ META_NAMES[m] }}){% endif %}"><img src="{{ icon(sid, 64) }}" alt="{{ f.ship }}" loading="lazy">{% if m in META_NAMES %}<span class="meta-mark m{{ m }}" aria-hidden="true"></span>{% endif %}</span>
             {% else %}<span class="hull-missing" title="{{ f.ship }}">?</span>{% endif %}
           {% endfor %}
           {% if d.fits|length > 8 %}<span class="more">+{{ d.fits|length - 8 }}</span>{% endif %}

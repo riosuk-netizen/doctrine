@@ -49,7 +49,7 @@
     <div class="fit-hull">
       {% if L.ship_id %}<div class="hull-wrap" title="{{ f.ship }}">
         <img class="hull-render" src="{{ render_img(L.ship_id, 256) }}" srcset="{{ render_img(L.ship_id, 256) }} 1x, {{ render_img(L.ship_id, 512) }} 2x" alt="{{ f.ship }}" width="200" height="200" loading="lazy">
-        {% if ship_meta.get(L.ship_id, 0) not in (0, 1) %}<span class="hull-badge" style="background-image: url('{{ icon(L.ship_id, 64) }}')" aria-hidden="true"></span>{% endif %}
+        {% set m = ship_meta.get(L.ship_id, 0) %}{% if m in META_NAMES %}<span class="meta-mark m{{ m }}" title="{{ META_NAMES[m] }}" aria-label="{{ META_NAMES[m] }}"></span>{% endif %}
       </div>
       {% else %}<div class="hull-render hull-missing">?</div>{% endif %}
     </div>

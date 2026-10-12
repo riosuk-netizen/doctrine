@@ -87,6 +87,8 @@ def ago(dt):
 
 app.jinja_env.filters["ukdate"] = ukdate
 app.jinja_env.filters["ago"] = ago
+META_NAMES = {2: "Tech II", 3: "Storyline", 4: "Faction", 5: "Officer", 6: "Deadspace", 14: "Tech III"}
+app.jinja_env.globals["META_NAMES"] = META_NAMES
 app.jinja_env.filters["tags"] = lambda s: [t.strip() for t in (s or "").split(",") if t.strip()]
 
 
@@ -186,7 +188,8 @@ def index():
     all_fits = [f for d in doctrines for f in d.fits]
     info = esi.resolve({f.ship for f in all_fits})
     ship_ids = {f.id: (info.get(f.ship.lower()).type_id if info.get(f.ship.lower()) else None) for f in all_fits}
-    return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids)
+    ship_meta = skills.meta_groups(set(ship_ids.values()))
+    return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta)
 
 
 @app.route("/doctrine/<int:did>")

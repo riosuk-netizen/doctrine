@@ -354,3 +354,12 @@ kbd { display: inline-block; padding: 0 6px; border: 1px solid var(--line); bord
 .byline-dot { color: #3a4352; }
 .card-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; color: var(--muted); font-size: .8rem; }
 .card-meta img { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line); background: #000; }
+
+/* themed scrollbars, so they match the dark site instead of the default white */
+html { scrollbar-color: #2a3444 var(--bg); }
+.fit-jump { scrollbar-width: thin; scrollbar-color: #3a4658 transparent; padding-bottom: 8px; }
+.fit-jump:hover { scrollbar-color: var(--accent) transparent; }
+.fit-jump::-webkit-scrollbar { height: 6px; }
+.fit-jump::-webkit-scrollbar-track { background: transparent; }
+.fit-jump::-webkit-scrollbar-thumb { background: #3a4658; border-radius: 999px; }
+.fit-jump:hover::-webkit-scrollbar-thumb { background: var(--accent); }

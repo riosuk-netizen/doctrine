@@ -74,6 +74,7 @@ def ago(dt):
 
 app.jinja_env.filters["ukdate"] = ukdate
 app.jinja_env.filters["ago"] = ago
+app.jinja_env.filters["tags"] = lambda s: [t.strip() for t in (s or "").split(",") if t.strip()]
 
 
 def set_author(d, name):

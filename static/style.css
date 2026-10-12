@@ -147,7 +147,7 @@ div.hull-render { display: grid; place-items: center; color: var(--muted); font-
 .fit-title { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
 .fit-title h2 { margin: 0; font-size: 1.5rem; line-height: 1.1; }
 .ship { margin: 2px 0 0; color: var(--muted); }
-.role { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: rgba(232,163,60,.15); color: var(--accent-2); font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.role { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; background: rgba(232,163,60,.15); color: var(--accent-2); font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 .fit-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
 .notes { margin: 10px 0 0; color: var(--muted); white-space: pre-line; border-left: 3px solid var(--accent); padding-left: 10px; }
 

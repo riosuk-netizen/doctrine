@@ -47,7 +47,7 @@
   {% set L = layouts[f.id] %}
   <article class="fit" id="fit-{{ f.id }}">
     <div class="fit-hull">
-      {% if L.ship_id %}<img class="hull-render" src="{{ render_img(L.ship_id, 256) }}" alt="{{ f.ship }}" loading="lazy">
+      {% if L.ship_id %}<img class="hull-render" src="{{ icon(L.ship_id, 256) }}" alt="{{ f.ship }}" title="{{ f.ship }}" width="200" height="200" loading="lazy">
       {% else %}<div class="hull-render hull-missing">?</div>{% endif %}
     </div>
 

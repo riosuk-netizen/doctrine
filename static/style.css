@@ -363,3 +363,11 @@ html { scrollbar-color: #2a3444 var(--bg); }
 .fit-jump::-webkit-scrollbar-track { background: transparent; }
 .fit-jump::-webkit-scrollbar-thumb { background: #3a4658; border-radius: 999px; }
 .fit-jump:hover::-webkit-scrollbar-thumb { background: var(--accent); }
+
+/* big ship image: square EVE icon (shows tech / faction corner marks) */
+.hull-render {
+  border-radius: 12px; object-fit: cover; background: #000;
+  border: 1px solid var(--line);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.02), 0 12px 30px rgba(0,0,0,.45);
+}
+div.hull-render { border-radius: 12px; }

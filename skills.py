@@ -96,13 +96,34 @@ def _meta_lookup(type_id):
             return meta
     except (requests.RequestException, ValueError, AttributeError, TypeError):
         pass
+    # CCP's ESI on its own: the metaGroupID attribute isn't always there, so also use the
+    # tech level (always there) and the market tree (faction hulls sit under a "... Faction ..." group)
     data = _get_type(type_id)  # raises on failure
     attrs = data.get("dogma_attributes") or []
     meta = meta_from_dogma(attrs)
-    if not meta:
-        tech = next((int(a["value"]) for a in attrs if a.get("attribute_id") == 422), 1)  # techLevel
-        meta = 2 if tech == 2 else (14 if tech == 3 else 0)
-    return meta
+    if meta:
+        return meta
+    tech = next((int(a["value"]) for a in attrs if a.get("attribute_id") == 422), 1)  # techLevel
+    if tech == 2:
+        return 2
+    if tech == 3:
+        return 14
+    group_id = data.get("market_group_id")
+    for _ in range(5):  # walk up the market tree
+        if not group_id:
+            break
+        group = _market_group(group_id)  # raises on failure, so a half-checked answer isn't cached
+        if "faction" in group.get("name", "").lower():
+            return 4
+        group_id = group.get("parent_group_id")
+    return 0
+
+
+@lru_cache(maxsize=512)
+def _market_group(group_id):
+    r = session.get(f"{ESI}/markets/groups/{group_id}/", params=PARAMS, timeout=15)
+    r.raise_for_status()
+    return r.json()
 
 
 def meta_groups(type_ids):

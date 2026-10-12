@@ -4,8 +4,8 @@ import re
 from datetime import datetime, timezone
 from functools import wraps
 
-from flask import (Flask, Response, abort, flash, redirect, render_template,
-                   request, session, url_for)
+from flask import (Flask, Response, abort, flash, jsonify, redirect,
+                   render_template, request, session, url_for)
 
 import esi
 import markup
@@ -46,12 +46,12 @@ with app.app_context():
                     _conn.execute(text(f"ALTER TABLE {_table} ADD COLUMN {_name} {_sql}"))
             except Exception:  # another worker got there first
                 pass
-    # one-off: forget tech/faction results saved by the first version, which missed Navy ships
+    # one-off: forget tech/faction results saved by earlier versions, which missed some Navy ships
     try:
         with db.engine.begin() as _conn:
-            if not _conn.execute(text("SELECT 1 FROM kv WHERE key = 'meta_cache_v2'")).first():
+            if not _conn.execute(text("SELECT 1 FROM kv WHERE key = 'meta_cache_v3'")).first():
                 _conn.execute(text("UPDATE type_reqs SET meta_group = NULL"))
-                _conn.execute(text("INSERT INTO kv (key, value, updated_at) VALUES ('meta_cache_v2', '1', CURRENT_TIMESTAMP)"))
+                _conn.execute(text("INSERT INTO kv (key, value, updated_at) VALUES ('meta_cache_v3', '1', CURRENT_TIMESTAMP)"))
     except Exception:  # another worker did it first
         pass
 
@@ -311,6 +311,51 @@ def fit_delete(fid):
     db.session.commit()
     flash(f"Removed {f.name}.", "ok")
     return redirect(url_for("doctrine", did=did))
+
+
+@app.route("/admin/ship-check")
+@admin_required
+def ship_check():
+    """Editors only: what each data source tells this server about a ship's tech/faction mark.
+    Use as /admin/ship-check?ship=Federation Navy Comet"""
+    from models import TypeReqs
+    name = request.args.get("ship", "").strip()
+    out = {"ship": name}
+    info = esi.resolve({name}).get(name.lower()) if name else None
+    if not info:
+        out["error"] = "Ship name not found. Use the exact in-game name, e.g. ?ship=Federation Navy Comet"
+        return jsonify(out)
+    tid = info.type_id
+    out["type_id"] = tid
+    row = db.session.get(TypeReqs, tid)
+    out["saved_meta_group"] = row.meta_group if row else None
+    try:
+        r = esi.session.get(f"{skills.REF_DATA}/{tid}", timeout=15)
+        out["everef_status"] = r.status_code
+        d = r.json() if r.ok else {}
+        out["everef_meta_group"] = d.get("meta_group_id")
+    except Exception as e:  # report, don't crash
+        out["everef_error"] = repr(e)[:200]
+    try:
+        d = skills._get_type(tid)
+        attrs = {a["attribute_id"]: a["value"] for a in d.get("dogma_attributes") or []}
+        out["esi_metaGroupID_1692"] = attrs.get(1692)
+        out["esi_techLevel_422"] = attrs.get(422)
+        chain, gid = [], d.get("market_group_id")
+        for _ in range(5):
+            if not gid:
+                break
+            g = skills._market_group(gid)
+            chain.append(g.get("name"))
+            gid = g.get("parent_group_id")
+        out["esi_market_tree"] = chain
+    except Exception as e:
+        out["esi_error"] = repr(e)[:200]
+    try:
+        out["fresh_lookup_result"] = skills._meta_lookup(tid)
+    except Exception as e:
+        out["fresh_lookup_error"] = repr(e)[:200]
+    return jsonify(out)
 
 
 @app.route("/login", methods=["GET", "POST"])

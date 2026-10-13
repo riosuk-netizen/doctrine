@@ -36,6 +36,10 @@
       <span>Rift Watch <span class="brand-sub">Fleet Doctrines</span></span>
     </a>
     <nav>
+      <a class="btn btn-ghost" href="https://riftwatch.onrender.com/" title="Back to the Rift Watch home page" aria-label="Rift Watch home">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7M6 9v11h4.5v-6h3v6H18V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="btn-label">Home</span>
+      </a>
       {% if is_admin %}
         <a class="btn btn-primary" href="{{ url_for('doctrine_new') }}">+ New doctrine</a>
         {% if not open_mode %}<a class="btn btn-ghost" href="{{ url_for('logout') }}">Log out</a>{% endif %}

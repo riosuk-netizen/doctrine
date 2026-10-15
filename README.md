@@ -12,7 +12,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Download all (XML)** imports a whole doctrine at once via Import & Export > Import from File.
 * Each fit has three tabs: **Fit**, **Required skills** and **Module list**.
 * **Required skills** lists every skill needed including prerequisites, with five level pips per skill. Levels an alpha clone can't train are gold, and each fit gets an **Alpha OK** or **Omega** badge. **Copy as skill plan** copies the plan for EVE's skill planner.
-* **Fitting check** (top of the Required skills tab): CPU, power grid and calibration used vs available with module skills only, with the cheapest fitting skills that make it fit (kept within alpha limits where possible), and with every fitting skill at V. Those fitting skills are added to the skill list (tagged "fitting"), the skill plan and the Alpha/Omega badge. A fit that can't fit even at V gets a **Won't fit** badge.
+* **Fitting skills:** the minimum skills cover using each module, not fitting them all at once. When editing a fit, editors click levels for the seven skills that change CPU and power grid (CPU Management, Power Grid Management, Weapon Upgrades, Advanced Weapon Upgrades, Shield Upgrades, Energy Grid Upgrades, Electronics Upgrades). These show in their own **Fitting skills** section under the minimum skills, and are included in the skill plan and the Alpha/Omega badge. Boxes above the alpha limit have a gold outline.
 * Fits can have several role tags, separated by commas (e.g. `EWAR, DPS`).
 
 **For editors**
@@ -30,7 +30,6 @@ Live at https://doctrine-li9g.onrender.com/
 * **Item names to type IDs and icons:** ESI's public `/universe/ids/` and `/universe/types/` endpoints (no login), cached in the database. Images come from `images.evetech.net`.
 * **Skill requirements:** dogma attributes on each type and skill from ESI, cached in the database.
 * **Alpha clone skill caps:** CCP's clone grade data published at `https://sde.hoboleaks.space/tq/clonestates.json`, cached for a day with the last good copy kept in the database.
-* **Fitting check:** a cut-down version of EVE's dogma rules (`fitting.py`) for CPU, power grid and calibration only. It reads type attributes, dogma effects and dogma attributes from EVE Ref (`ref-data.everef.net`), because CCP's ESI leaves out which skill a "modules requiring skill X" bonus applies to. Saved in the `ref_cache` table and refreshed every 30 days. Checked against the in-game fitting window for a Burst with all fitting skills at V (CPU 198.5/237.5, grid 51.5/53.0).
 * **Author portraits:** character ID looked up through ESI `/universe/ids/`.
 
 ## Files
@@ -38,11 +37,10 @@ Live at https://doctrine-li9g.onrender.com/
 | File | What it does |
 |---|---|
 | `app.py` | Routes, editor login, template helpers (`asset()` cache-busting, date and tag filters), startup column migrations |
-| `models.py` | Database tables: Doctrine, Fit, TypeInfo, TypeReqs, SkillInfo, KV, RefCache |
+| `models.py` | Database tables: Doctrine, Fit, TypeInfo, TypeReqs, SkillInfo, KV |
 | `eft.py` | EFT parsing, slot layout, XML export |
 | `esi.py` | Name to type ID lookup, character lookup |
-| `skills.py` | Required skills, prerequisites, alpha caps, skill plan text, cached EVE Ref game data |
-| `fitting.py` | Fitting check: CPU / power grid / calibration and the fitting skills a fit needs |
+| `skills.py` | Required skills, prerequisites, alpha caps, skill plan text |
 | `markup.py` | Discord-style formatting to safe HTML |
 | `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, login |
 | `static/` | `style.css`, `app.js`, logo (gif and png), share banner `og-banner.png` |

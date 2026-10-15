@@ -411,25 +411,26 @@ div.hull-render { border-radius: 12px; }
   .brand { white-space: nowrap; }
 }
 
-/* fitting check (CPU / grid / calibration) */
-.fitcheck { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--line); border-left: 3px solid var(--ok); border-radius: 8px; background: var(--panel); }
-.fitcheck.bad { border-left-color: var(--danger); }
-.fitcheck-head h4 { margin: 0 0 2px; font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; }
-.fitcheck-head p { margin: 0 0 10px; color: var(--muted); font-size: .88rem; }
-.fitcheck-head strong { color: var(--text); }
-.bad-text { color: #f08a8a !important; }
-.fitcheck-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-.fitcheck-table th, .fitcheck-table td { padding: 6px 8px; text-align: left; border-top: 1px solid rgba(255,255,255,.04); vertical-align: top; }
-.fitcheck-table thead th { color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-top: 0; }
-.fitcheck-table tbody th { color: var(--muted); font-weight: 600; white-space: nowrap; }
-.fitcheck-table td { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.fitcheck-table td small { display: block; font-size: .75rem; }
-.fitcheck-table td.ok small { color: #8fe0ad; }
-.fitcheck-table td.over { color: #f08a8a; }
-.fitcheck-table td.over small { color: #f08a8a; }
-.fit-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(61,143,217,.15); color: #8cc0ee; border: 1px solid rgba(61,143,217,.35); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; vertical-align: 1px; }
-.clone-badge.nofit { background: rgba(224,82,82,.14); color: #f08a8a; border: 1px solid rgba(224,82,82,.4); }
-@media (max-width: 720px) {
-  .fitcheck { overflow-x: auto; }
-  .fitcheck-table { min-width: 420px; }
-}
+/* fitting skills: section on the doctrine page */
+.fitting-skills { margin: 4px 0 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.fitting-skills h4 { margin: 0 0 8px; font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; }
+.fitting-skills h4 .muted { font-size: .78rem; text-transform: none; letter-spacing: 0; font-weight: 400; margin-left: 6px; }
+.fitting-empty { margin: 4px 0 14px; }
+
+/* fitting skills: clickable boxes on the edit form */
+.fs-picker { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 8px; margin: 0; }
+.fs-picker legend { padding: 0 6px; font-weight: 600; font-size: .9rem; }
+.fs-picker legend .hint { display: block; font-weight: 400; margin-top: 2px; }
+.fs-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.fs-row:last-child { border-bottom: 0; }
+.fs-name { font-size: .92rem; }
+.fs-name small { color: var(--muted); font-size: .75rem; margin-left: 4px; }
+.fs-boxes { display: inline-flex; flex-direction: row-reverse; gap: 4px; }
+.fs-boxes input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.fs-box { width: 20px; height: 20px; border-radius: 3px; background: #2a3342; border: 1px solid #3a4658; cursor: pointer; transition: background .1s, transform .1s; }
+.fs-box.omega { border-color: rgba(232,163,60,.55); }
+.fs-box:hover, .fs-box:hover ~ .fs-box { background: #4a5568; }
+.fs-boxes input:checked ~ .fs-box { background: #d9e2ee; border-color: #d9e2ee; }
+.fs-boxes input:checked ~ .fs-box.omega { background: var(--accent); border-color: var(--accent); }
+.fs-boxes input:focus-visible + .fs-box { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

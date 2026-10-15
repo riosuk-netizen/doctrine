@@ -1,4 +1,5 @@
 import hmac
+import json
 import os
 import re
 from datetime import datetime, timezone
@@ -38,6 +39,7 @@ with app.app_context():
         ("doctrine", "author_id", "INTEGER"),
         ("type_reqs", "meta_group", "INTEGER"),
         ("type_reqs", "reqs_pending", "BOOLEAN DEFAULT FALSE"),
+        ("fit", "fitting_skills", "TEXT DEFAULT ''"),
     )
     for _table, _name, _sql in _new_cols:
         if _name not in {c["name"] for c in inspect(db.engine).get_columns(_table)}:
@@ -197,7 +199,8 @@ def doctrine(did):
     d = db.get_or_404(Doctrine, did)
     layouts = layouts_for(d.fits)
     ship_meta = skills.meta_groups({L["ship_id"] for L in layouts.values()})
-    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts),
+    fitting = {f.id: f.fitting_levels() for f in d.fits}
+    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts, fitting),
                            ship_meta=ship_meta)
 
 
@@ -266,6 +269,21 @@ def doctrine_delete(did):
     return redirect(url_for("index"))
 
 
+def fitting_form(f, form=None):
+    """Data for the clickable fitting skill boxes on the edit form."""
+    current = f.fitting_levels()
+    if form is not None:
+        current = {}
+        for sid, _ in skills.FITTING_SKILLS:
+            try:
+                current[sid] = int(form.get(f"fs_{sid}", 0) or 0)
+            except ValueError:
+                pass
+    caps = skills.alpha_caps() or {}
+    return {"fitting_rows": [{"id": sid, "name": name, "level": current.get(sid, 0), "cap": caps.get(sid)}
+                             for sid, name in skills.FITTING_SKILLS]}
+
+
 @app.route("/fit/<int:fid>/edit", methods=["GET", "POST"])
 @admin_required
 def fit_edit(fid):
@@ -276,16 +294,26 @@ def fit_edit(fid):
             p = parse_fit(eft_text)
         except EFTError as e:
             flash(str(e), "warn")
-            return render_template("fit_form.html", f=f, form=request.form)
+            return render_template("fit_form.html", f=f, form=request.form, **fitting_form(f, request.form))
         f.eft, f.ship = eft_text, p["ship"][:120]
         f.name = request.form.get("name", "").strip()[:120] or p["name"][:120]
         f.role = request.form.get("role", "").strip()[:60]
         f.notes = request.form.get("notes", "").strip()
+        chosen = {}
+        for sid, _ in skills.FITTING_SKILLS:
+            try:
+                lvl = int(request.form.get(f"fs_{sid}", 0) or 0)
+            except ValueError:
+                lvl = 0
+            if 1 <= lvl <= 5:
+                chosen[str(sid)] = lvl
+        f.fitting_skills = json.dumps(chosen)
         f.doctrine.updated_at = now()
         db.session.commit()
         flash("Fit saved.", "ok")
         return redirect(url_for("doctrine", did=f.doctrine_id) + f"#fit-{f.id}")
-    return render_template("fit_form.html", f=f, form={"name": f.name, "role": f.role, "notes": f.notes, "eft": f.eft})
+    return render_template("fit_form.html", f=f, form={"name": f.name, "role": f.role, "notes": f.notes, "eft": f.eft},
+                           **fitting_form(f))
 
 
 @app.post("/fit/<int:fid>/move/<direction>")

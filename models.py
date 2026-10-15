@@ -30,6 +30,14 @@ class Fit(db.Model):
     notes = db.Column(db.Text, default="")
     eft = db.Column(db.Text, nullable=False)
     position = db.Column(db.Integer, default=0)
+    fitting_skills = db.Column(db.Text, default="")  # JSON {skill_id: level}, set by editors
+
+    def fitting_levels(self):
+        import json
+        try:
+            return {int(k): int(v) for k, v in json.loads(self.fitting_skills or "{}").items() if int(v) > 0}
+        except (ValueError, TypeError, AttributeError):
+            return {}
 
 
 class TypeReqs(db.Model):
@@ -52,14 +60,6 @@ class KV(db.Model):
     """Small key/value store for cached reference data (alpha clone skill caps)."""
     key = db.Column(db.String(60), primary_key=True)
     value = db.Column(db.Text, nullable=False)
-    updated_at = db.Column(db.DateTime, default=now, onupdate=now)
-
-
-class RefCache(db.Model):
-    """Game data from EVE Ref used by the fitting check (types, dogma effects, dogma attributes)."""
-    kind = db.Column(db.String(10), primary_key=True)
-    ref_id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.Text, nullable=False)
     updated_at = db.Column(db.DateTime, default=now, onupdate=now)
 
 

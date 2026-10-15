@@ -79,6 +79,22 @@
     });
   });
 
+  // Fitting skill boxes: clicking the level that's already set clears it
+  document.addEventListener("pointerdown", (e) => {
+    const box = e.target.closest(".fs-box");
+    if (!box) return;
+    const input = document.getElementById(box.htmlFor);
+    box.dataset.wasChecked = input && input.checked ? "1" : "";
+  });
+  document.addEventListener("click", (e) => {
+    const box = e.target.closest(".fs-box");
+    if (!box || box.dataset.wasChecked !== "1") return;
+    e.preventDefault();
+    box.dataset.wasChecked = "";
+    const zero = box.closest(".fs-boxes").querySelector(".fs-zero");
+    if (zero) zero.checked = true;
+  });
+
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {
     const tile = e.target.closest(".tile[data-name]");

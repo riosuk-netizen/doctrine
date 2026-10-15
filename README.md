@@ -23,7 +23,11 @@ Live at https://doctrine-li9g.onrender.com/
 * Fits can have several role tags, separated by commas (e.g. `EWAR, DPS`).
 
 **For editors**
-* Log in with the editor password, then **+ New doctrine** or **Edit / add fits**.
+* Editing uses EVE login, not a password. There are two roles:
+  * **Owners** can edit, and can open the **Access** page (top bar) to add or remove owners and editors by exact character name. The first owner is set in Render with `OWNER_CHARACTERS`.
+  * **Editors** can add, edit and delete doctrines and fits.
+  * Anyone else who logs in can browse, push fits and check their skills, but sees no edit buttons. The top bar shows each person's role next to their name.
+* Then use **+ New doctrine** or **Edit / add fits**. The author box starts filled with your character name.
 * Paste one or more EFT fits; each starts with its `[Ship, Fit name]` line. A role in brackets at the end of the fit name, like `(Logi)`, becomes a role tag.
 * Doctrines have an **Author** (exact in-game character name, which shows their portrait linked to zKillboard) and show **Updated x ago**, which changes whenever anything in the doctrine changes.
 * Descriptions and fit notes take Discord formatting: `**bold**`, `*italic*`, `__underline__`, `~~strike~~`, `` `code` ``, `- bullets`, `1. numbers`, `#` headings, `-#` small text, `>` quotes and links. Copy a Discord message with **Copy Text** to keep the formatting.
@@ -44,20 +48,20 @@ Live at https://doctrine-li9g.onrender.com/
 | File | What it does |
 |---|---|
 | `app.py` | Routes, editor login, template helpers (`asset()` cache-busting, date and tag filters), startup column migrations |
-| `models.py` | Database tables: Doctrine, Fit, TypeInfo, TypeReqs, SkillInfo, KV |
+| `models.py` | Database tables: Doctrine, Fit, Access (owners and editors), TypeInfo, TypeReqs, SkillInfo, KV |
 | `eft.py` | EFT parsing, slot layout, XML export |
 | `esi.py` | Name to type ID lookup, character lookup |
 | `skills.py` | Required skills, prerequisites, alpha caps, skill plan text |
 | `sso.py` | EVE login (SSO) and saving fits to a character's fittings through ESI |
 | `markup.py` | Discord-style formatting to safe HTML |
-| `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, login |
+| `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, access |
 | `static/` | `style.css`, `app.js`, logo (gif and png), share banner `og-banner.png` |
 
 ## Hosting (Render + Neon)
 
 * **Render web service**, Python. Build `pip install -r requirements.txt`, start `gunicorn app:app --bind 0.0.0.0:$PORT`. `render.yaml` has the same settings for a Blueprint deploy.
 * **Environment variables:**
-  * `ADMIN_PASSWORD`: the editor password. If it's empty, anyone can edit and a warning banner shows.
+  * `OWNER_CHARACTERS`: your character name, plus any others separated by commas. These are owners who can't be removed from the site itself. If nobody is set as owner, nobody can edit and a banner says so.
   * `SECRET_KEY`: any long random string.
   * `EVE_CLIENT_ID` and `EVE_CLIENT_SECRET`: from the app at developers.eveonline.com, with the scopes `esi-fittings.write_fittings.v1` and `esi-skills.read_skills.v1` and the callback URL `https://<site address>/sso/callback`. Leave them out and the EVE login buttons simply don't show.
   * `DATABASE_URL`: Postgres connection string from Neon (free, doesn't expire). Without it the site falls back to SQLite, which Render wipes on every redeploy.
@@ -74,7 +78,7 @@ Live at https://doctrine-li9g.onrender.com/
 
 ```
 pip install -r requirements.txt
-ADMIN_PASSWORD=changeme python app.py
+OWNER_CHARACTERS="Your Character" EVE_CLIENT_ID=... EVE_CLIENT_SECRET=... python app.py
 ```
 
 Then open http://127.0.0.1:5000.

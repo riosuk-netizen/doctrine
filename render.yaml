@@ -10,7 +10,8 @@ services:
         value: "3.12.4"
       - key: SECRET_KEY
         generateValue: true
-      - key: ADMIN_PASSWORD
+      # your character name(s), comma separated: owners who can edit and manage access
+      - key: OWNER_CHARACTERS
         sync: false
       # EVE SSO app from developers.eveonline.com
       - key: EVE_CLIENT_ID

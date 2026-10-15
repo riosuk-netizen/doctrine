@@ -529,3 +529,20 @@ div.hull-render { border-radius: 12px; }
 .how-push .step b { background: #3f7fae; color: #fff; }
 .step a { color: #cfe8ff; font-weight: 600; }
 @media (max-width: 720px) { .how-label { text-align: center; } }
+
+/* owners and editors */
+.role-tag { margin-left: 2px; padding: 0 6px; border-radius: 999px; font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; background: #1b2535; color: var(--muted); }
+.role-tag.owner { background: rgba(232,163,60,.16); color: var(--accent-2); }
+.role-tag.editor { background: rgba(61,143,217,.16); color: #9cc9f2; }
+@media (max-width: 480px) { .role-tag { display: none; } }
+.access-add { flex-direction: row; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.access-add label:first-child { flex: 1 1 260px; }
+.access-add select { padding: 9px 10px; border-radius: 8px; background: var(--bg-2); color: var(--text); border: 1px solid var(--line); font: inherit; }
+.access-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0 16px; }
+.access-cols h2 { margin: 0 0 10px; font-size: 1.05rem; }
+.access-list { list-style: none; margin: 0; padding: 0; }
+.access-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.access-row img, .access-noimg { width: 32px; height: 32px; border-radius: 6px; flex: none; background: #1b2535; }
+.access-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.access-you { font-size: .8rem; }
+@media (max-width: 430px) { .topbar:has(nav .btn-primary) .brand > span { display: none; } }

@@ -84,3 +84,19 @@ def character_id(name):
     except requests.RequestException:
         pass
     return None
+
+
+def character(name):
+    """{"id", "name"} for an exact character name (name with EVE's own capitals), or None."""
+    name = (name or "").strip()
+    if not name:
+        return None
+    try:
+        r = session.post(f"{ESI}/universe/ids/", params={**PARAMS, "language": "en"}, json=[name], timeout=15)
+        r.raise_for_status()
+        for c in r.json().get("characters", []):
+            if c["name"].lower() == name.lower():
+                return {"id": c["id"], "name": c["name"]}
+    except requests.RequestException:
+        pass
+    return None

@@ -1,11 +1,10 @@
-import hmac
 import json
 import os
 import re
 from datetime import datetime, timezone
 from functools import wraps
 
-from flask import (Flask, Response, abort, flash, jsonify, redirect,
+from flask import (Flask, Response, abort, flash, g, jsonify, redirect,
                    render_template, request, session, url_for)
 
 import esi
@@ -18,7 +17,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from sqlalchemy import inspect, text
 
-from models import Doctrine, Fit, db, now
+from models import Access, Doctrine, Fit, db, now
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # Render sits behind a proxy: keep links https
@@ -29,7 +28,9 @@ for prefix in ("postgres://", "postgresql://"):
         db_url = "postgresql+psycopg2://" + db_url[len(prefix):]
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+# owners named in Render (comma separated character names); more owners and editors are added on the Access page
+OWNER_LIST = [n.strip() for n in os.environ.get("OWNER_CHARACTERS", "").split(",") if n.strip()]
+OWNER_NAMES = {n.lower() for n in OWNER_LIST}
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # sent on the EVE login return trip, not on other sites' form posts
 app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("RENDER"))  # https only once live on Render
 
@@ -108,18 +109,46 @@ def set_author(d, name):
 
 # ---------- helpers ----------
 
+def role():
+    """'owner', 'editor' or None for the pilot logged in with EVE."""
+    if "role" not in g:
+        pilot = sso.character(session)
+        r = None
+        if pilot:
+            if pilot["name"].strip().lower() in OWNER_NAMES:
+                r = "owner"
+            else:
+                row = db.session.get(Access, pilot["id"])
+                r = row.role if row else None
+        g.role = r
+    return g.role
+
+
 def is_admin():
-    return not ADMIN_PASSWORD or session.get("admin") is True
+    return role() in ("owner", "editor")
 
 
-def admin_required(view):
-    @wraps(view)
-    def wrapped(*a, **kw):
-        if not is_admin():
-            flash("Log in as an editor to do that.", "warn")
-            return redirect(url_for("login", next=request.path))
-        return view(*a, **kw)
-    return wrapped
+def is_owner():
+    return role() == "owner"
+
+
+def _needs(check, what):
+    def deco(view):
+        @wraps(view)
+        def wrapped(*a, **kw):
+            if not sso.character(session):
+                flash(f"Log in with EVE to {what}.", "warn")
+                return redirect(url_for("sso_login", next=request.path))
+            if not check():
+                flash(f"{session.get('sso_char_name')} doesn't have access to {what}. Ask an owner to add you on the Access page.", "warn")
+                return redirect(url_for("index"))
+            return view(*a, **kw)
+        return wrapped
+    return deco
+
+
+admin_required = _needs(is_admin, "edit doctrines")
+owner_required = _needs(is_owner, "manage access")
 
 
 @app.context_processor
@@ -138,7 +167,8 @@ def inject():
             v = 0
         return url_for("static", filename=filename, v=v)
 
-    return {"asset": asset, "is_admin": is_admin(), "open_mode": not ADMIN_PASSWORD, "icon": icon,
+    no_owner = not OWNER_NAMES and not Access.query.filter_by(role="owner").first()
+    return {"asset": asset, "is_admin": is_admin(), "is_owner": is_owner(), "role": role(), "no_owner": no_owner, "icon": icon,
             "render_img": render_img, "ORDER": DISPLAY_ORDER, "LABELS": LABELS,
             "sso_on": sso.enabled(), "pilot": sso.character(session),
             "pilot_skills_ok": sso.can_read_skills(session)}
@@ -276,7 +306,7 @@ def doctrine_new():
             flash(e, "warn")
         flash(f"Doctrine created with {n} fit{'s' if n != 1 else ''}.", "ok")
         return redirect(url_for("doctrine", did=d.id))
-    return render_template("doctrine_form.html", d=None, form={})
+    return render_template("doctrine_form.html", d=None, form={"author": session.get("sso_char_name", "")})
 
 
 @app.route("/doctrine/<int:did>/edit", methods=["GET", "POST"])
@@ -429,25 +459,55 @@ def ship_check():
     return jsonify(out)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login")
 def login():
-    if not ADMIN_PASSWORD:
-        return redirect(url_for("index"))
-    if request.method == "POST":
-        if hmac.compare_digest(request.form.get("password", ""), ADMIN_PASSWORD):
-            session["admin"] = True
-            session.permanent = True
-            flash("Editor mode on.", "ok")
-            nxt = request.args.get("next", "")
-            return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("index"))
-        flash("Wrong password.", "warn")
-    return render_template("login.html")
+    """Old editor login address: editing now uses EVE login."""
+    return redirect(url_for("sso_login", next=request.args.get("next", "")))
 
 
-@app.route("/logout")
-def logout():
-    session.pop("admin", None)
-    return redirect(url_for("index"))
+# ---------- who can edit ----------
+
+@app.route("/access")
+@owner_required
+def access():
+    rows = Access.query.order_by(Access.role.desc(), Access.name).all()
+    return render_template("access.html", owners=[r for r in rows if r.role == "owner"],
+                           editors=[r for r in rows if r.role == "editor"], env_owners=OWNER_LIST)
+
+
+@app.post("/access/add")
+@owner_required
+def access_add():
+    name = request.form.get("name", "").strip()
+    new_role = "owner" if request.form.get("role") == "owner" else "editor"
+    if not name:
+        return redirect(url_for("access"))
+    ch = esi.character(name)
+    if not ch:
+        flash(f"Couldn't find a character called {name}. Check the spelling (it must be the exact in-game name).", "warn")
+        return redirect(url_for("access"))
+    row = db.session.get(Access, ch["id"])
+    if row:
+        row.role, row.name = new_role, ch["name"]
+        flash(f"{ch['name']} is now {'an owner' if new_role == 'owner' else 'an editor'}.", "ok")
+    else:
+        db.session.add(Access(char_id=ch["id"], name=ch["name"], role=new_role, added_by=session.get("sso_char_name", "")))
+        flash(f"Added {ch['name']} as {'an owner' if new_role == 'owner' else 'an editor'}.", "ok")
+    db.session.commit()
+    return redirect(url_for("access"))
+
+
+@app.post("/access/<int:cid>/remove")
+@owner_required
+def access_remove(cid):
+    row = db.get_or_404(Access, cid)
+    if cid == session.get("sso_char_id"):
+        flash("You can't remove yourself. Ask another owner to do it.", "warn")
+        return redirect(url_for("access"))
+    db.session.delete(row)
+    db.session.commit()
+    flash(f"Removed {row.name}.", "ok")
+    return redirect(url_for("access"))
 
 
 # ---------- EVE login and Push to EVE ----------

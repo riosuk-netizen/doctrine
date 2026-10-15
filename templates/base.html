@@ -42,9 +42,9 @@
       </a>
       {% if sso_on %}
         {% if pilot %}
-          <span class="pilot" title="Logged in to EVE as {{ pilot.name }}">
+          <span class="pilot" title="Logged in to EVE as {{ pilot.name }}{% if role %} ({{ role }}){% endif %}">
             <img src="https://images.evetech.net/characters/{{ pilot.id }}/portrait?size=64" alt="" width="26" height="26">
-            <span class="btn-label">{{ pilot.name }}</span>
+            <span class="btn-label">{{ pilot.name }}</span>{% if role %}<span class="role-tag {{ role }}">{{ role }}</span>{% endif %}
             <a class="pilot-out" href="{{ url_for('sso_logout', next=request.full_path) }}" title="Log out of EVE" aria-label="Log out of EVE">&times;</a>
           </span>
         {% else %}
@@ -54,17 +54,15 @@
           </a>
         {% endif %}
       {% endif %}
-      {% if is_admin %}
-        <a class="btn btn-primary" href="{{ url_for('doctrine_new') }}">+ New doctrine</a>
-        {% if not open_mode %}<a class="btn btn-ghost" href="{{ url_for('logout') }}">Log out</a>{% endif %}
-      {% else %}
-        <a class="btn btn-ghost" href="{{ url_for('login') }}">Editor login</a>
-      {% endif %}
+      {% if is_owner %}<a class="btn btn-ghost" href="{{ url_for('access') }}" title="Choose who can edit" aria-label="Access">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.7.8 2.7 2.6 3 5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="btn-label">Access</span></a>{% endif %}
+      {% if is_admin %}<a class="btn btn-primary" href="{{ url_for('doctrine_new') }}" title="New doctrine" aria-label="New doctrine">+<span class="btn-label"> New doctrine</span></a>{% endif %}
     </nav>
   </header>
 
-  {% if open_mode %}
-    <div class="banner">No ADMIN_PASSWORD set, so anyone can edit. Set one before sharing the link.</div>
+  {% if no_owner %}
+    <div class="banner">No owner set yet, so nobody can edit. In Render, add OWNER_CHARACTERS with your character name, then log in with EVE.</div>
   {% endif %}
 
   <main class="wrap">

@@ -69,3 +69,12 @@ class TypeInfo(db.Model):
     name = db.Column(db.String(200), nullable=False)
     type_id = db.Column(db.Integer, nullable=False)
     category_id = db.Column(db.Integer)
+
+
+class Access(db.Model):
+    """Characters allowed to edit (role 'editor') or to edit and manage access (role 'owner')."""
+    char_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    role = db.Column(db.String(10), nullable=False, default="editor")
+    added_by = db.Column(db.String(120), default="")
+    added_at = db.Column(db.DateTime, default=now)

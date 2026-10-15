@@ -15,7 +15,8 @@ from esi import ESI, session as http
 
 AUTHORIZE = "https://login.eveonline.com/v2/oauth/authorize"
 TOKEN = "https://login.eveonline.com/v2/oauth/token"
-SCOPES = "esi-fittings.write_fittings.v1"
+SCOPES = "esi-fittings.write_fittings.v1 esi-skills.read_skills.v1"
+SKILLS_SCOPE = "esi-skills.read_skills.v1"
 CLIENT_ID = os.environ.get("EVE_CLIENT_ID", "").strip()
 CLIENT_SECRET = os.environ.get("EVE_CLIENT_SECRET", "").strip()
 
@@ -24,7 +25,8 @@ SLOT_FLAGS = {"high": ("HiSlot", 8), "mid": ("MedSlot", 8), "low": ("LoSlot", 8)
               "rig": ("RigSlot", 3), "subsystem": ("SubSystemSlot", 4)}
 BAY_FLAGS = {"drones": "DroneBay", "fighters": "FighterBay", "cargo": "Cargo"}
 
-KEYS = ("sso_char_id", "sso_char_name", "sso_access", "sso_refresh", "sso_expires")
+KEYS = ("sso_char_id", "sso_char_name", "sso_access", "sso_refresh", "sso_expires", "sso_scopes")
+_skill_cache = {}  # character id -> (fetched at, skills); short-lived, never saved
 
 
 class NotLoggedIn(Exception):
@@ -68,6 +70,8 @@ def _store(sess, tok):
     sess["sso_access"] = tok["access_token"]
     sess["sso_refresh"] = tok.get("refresh_token") or sess.get("sso_refresh", "")
     sess["sso_expires"] = int(time.time()) + int(tok.get("expires_in", 1199))
+    scp = claims.get("scp") or []
+    sess["sso_scopes"] = [scp] if isinstance(scp, str) else list(scp)
 
 
 def finish_login(sess, code, state):
@@ -86,6 +90,39 @@ def character(sess):
     if sess.get("sso_char_id"):
         return {"id": sess["sso_char_id"], "name": sess.get("sso_char_name", "")}
     return None
+
+
+def can_read_skills(sess):
+    return SKILLS_SCOPE in (sess.get("sso_scopes") or [])
+
+
+def pilot_skills(sess):
+    """{skill_id: (trained level, active level)} for the logged-in pilot, or None if not available.
+    Active is lower than trained when an alpha clone is holding a skill back."""
+    if not sess.get("sso_char_id") or not can_read_skills(sess):
+        return None
+    cid = sess["sso_char_id"]
+    hit = _skill_cache.get(cid)
+    if hit and time.time() - hit[0] < 120:
+        return hit[1]
+    try:
+        token = _access_token(sess)
+        r = http.get(f"{ESI}/characters/{cid}/skills/", params={"datasource": "tranquility"},
+                     timeout=15, headers={"Authorization": f"Bearer {token}"})
+        if r.status_code in (401, 403):
+            sess["sso_scopes"] = [s for s in sess.get("sso_scopes", []) if s != SKILLS_SCOPE]
+            return None
+        r.raise_for_status()
+    except NotLoggedIn:
+        return None
+    except Exception:
+        return hit[1] if hit else None
+    skills = {s["skill_id"]: (int(s.get("trained_skill_level", 0)), int(s.get("active_skill_level", 0)))
+              for s in r.json().get("skills", [])}
+    if len(_skill_cache) > 500:
+        _skill_cache.clear()
+    _skill_cache[cid] = (time.time(), skills)
+    return skills
 
 
 def _access_token(sess):

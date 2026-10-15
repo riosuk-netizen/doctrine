@@ -474,3 +474,26 @@ div.hull-render { border-radius: 12px; }
 .pilot-out:hover { color: var(--text, #e6edf6); background: #1b2535; }
 .btn-short { display: none; }
 @media (max-width: 480px) { .btn-eve .btn-short { display: inline; } .topbar .btn-eve .btn-icon { display: none; } .pilot { padding-right: 2px; } }
+
+/* Can I fly this? (EVE login with skills) */
+.fly-badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; vertical-align: 1px; border: 1px solid; }
+.fly-badge.ready { background: rgba(79,191,122,.14); color: #8fe0ad; border-color: rgba(79,191,122,.45); }
+.fly-badge.short { background: rgba(224,82,82,.13); color: #f29a9a; border-color: rgba(224,82,82,.45); }
+.fly-badge.clone { background: rgba(232,163,60,.14); color: var(--accent-2); border-color: rgba(232,163,60,.45); }
+.you { flex: none; margin-left: auto; font-size: .76rem; font-weight: 600; white-space: nowrap; padding: 0 6px; border-radius: 4px; }
+.you.ok { color: #8fe0ad; }
+.you.short { color: #f29a9a; background: rgba(224,82,82,.12); }
+.you.clone { color: var(--accent-2); background: rgba(232,163,60,.12); }
+.skill-row.me-short .skill-name { color: #f2b3b3; }
+.skill-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.me-summary { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; font-size: .88rem; border: 1px solid; }
+.me-summary.ready { color: #a9e8c0; background: rgba(79,191,122,.08); border-color: rgba(79,191,122,.3); }
+.me-summary.short { color: #f2b3b3; background: rgba(224,82,82,.07); border-color: rgba(224,82,82,.3); }
+.me-summary.clone { color: var(--accent-2); background: rgba(232,163,60,.07); border-color: rgba(232,163,60,.3); }
+.ready-line { margin: 0; font-size: .82rem; font-weight: 600; }
+.ready-line.all { color: #8fe0ad; }
+.ready-line.some { color: var(--accent-2); }
+.ready-line.none { color: var(--muted); }
+.flash-info { background: #0e1f2e; border-color: #2c5878; color: #cfe8ff; }
+.flash-info a { color: inherit; font-weight: 600; }
+@media (max-width: 720px) { .skill-btns { width: 100%; } }

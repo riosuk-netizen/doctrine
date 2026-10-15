@@ -242,9 +242,10 @@ def _expand(direct, infos):
     return need
 
 
-def _plan_lines(need, infos):
-    """Skill plan text: one line per level, prerequisites first."""
-    done, lines = {}, []
+def _plan_lines(need, infos, start=None):
+    """Skill plan text: one line per level, prerequisites first.
+    start: levels already trained, which are left out of the plan."""
+    done, lines = dict(start or {}), []
 
     def name(sid):
         return infos.get(sid, {}).get("name", f"Skill {sid}")
@@ -263,9 +264,10 @@ def _plan_lines(need, infos):
     return lines
 
 
-def fit_skills(layouts, fitting=None):
+def fit_skills(layouts, fitting=None, have=None):
     """Build the Required skills view for each fit.
-    layouts: {fit_id: layout}; fitting: {fit_id: {skill_id: level}} fitting skills set by editors."""
+    layouts: {fit_id: layout}; fitting: {fit_id: {skill_id: level}} fitting skills set by editors;
+    have: the logged-in pilot's skills {skill_id: (trained, active)}, to check whether they can fly each fit."""
     fitting = fitting or {}
     per_fit_types = {}
     for fid, L in layouts.items():
@@ -332,7 +334,33 @@ def fit_skills(layouts, fitting=None):
             })
         else:
             views[fid]["fitting"] = []
+            full = need
+        if have is not None:
+            _check_pilot(views[fid], full, have, infos)
     return views
+
+
+def _check_pilot(view, full, have, infos):
+    """Mark each skill row with the pilot's level, and sum up whether they can fly the fit."""
+    rows = [sk for g in view["groups"] for sk in g["skills"]] + view.get("fitting", [])
+    for sk in rows:
+        trained, active = have.get(sk["id"], (0, 0))
+        sk["have"], sk["active"] = trained, active
+        need = sk["level"]
+        sk["state"] = "ok" if active >= need else "clone" if trained >= need else "short"
+    states = {}
+    for sid, lvl in full.items():
+        trained, active = have.get(sid, (0, 0))
+        st = "ok" if active >= lvl else "clone" if trained >= lvl else "short"
+        states[sid] = st
+    short = {sid: lvl for sid, lvl in full.items() if states[sid] == "short"}
+    trained = {sid: t for sid, (t, _) in have.items()}
+    view["me"] = {
+        "ready": not short and "clone" not in states.values(),
+        "short": len(short),
+        "clone": sum(1 for v in states.values() if v == "clone"),
+        "plan": "\n".join(_plan_lines(short, infos, start=trained)),
+    }
 
 
 def ship_classes(type_ids):

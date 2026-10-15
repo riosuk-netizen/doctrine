@@ -140,7 +140,8 @@ def inject():
 
     return {"asset": asset, "is_admin": is_admin(), "open_mode": not ADMIN_PASSWORD, "icon": icon,
             "render_img": render_img, "ORDER": DISPLAY_ORDER, "LABELS": LABELS,
-            "sso_on": sso.enabled(), "pilot": sso.character(session)}
+            "sso_on": sso.enabled(), "pilot": sso.character(session),
+            "pilot_skills_ok": sso.can_read_skills(session)}
 
 
 def layouts_for(fits):
@@ -212,7 +213,13 @@ def index():
             })
     search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "",
                          "desc": markup.plain(d.description or "")[:300], "fits": len(d.fits)} for d in doctrines]
-    return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta,
+    ready = {}
+    have = sso.pilot_skills(session) if all_fits else None
+    if have is not None:
+        views = skills.fit_skills(layouts_for(all_fits), {f.id: f.fitting_levels() for f in all_fits}, have)
+        for d in doctrines:
+            ready[d.id] = sum(1 for f in d.fits if views.get(f.id, {}).get("me", {}).get("ready"))
+    return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta, ready=ready,
                            search_data={"fits": search_fits, "doctrines": search_doctrines, "meta": META_NAMES})
 
 
@@ -222,8 +229,9 @@ def doctrine(did):
     layouts = layouts_for(d.fits)
     ship_meta = skills.meta_groups({L["ship_id"] for L in layouts.values()})
     fitting = {f.id: f.fitting_levels() for f in d.fits}
-    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts, fitting),
-                           ship_meta=ship_meta)
+    have = sso.pilot_skills(session)
+    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts, fitting, have),
+                           ship_meta=ship_meta, have_skills=have is not None)
 
 
 @app.route("/doctrine/<int:did>/xml")

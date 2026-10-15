@@ -60,7 +60,8 @@
           <h2>{{ f.name }}</h2>
           {% set S = skill_views.get(f.id) %}
           <p class="ship">{{ f.ship }}{% for tag in f.role|tags %} <span class="role">{{ tag }}</span>{% endfor %}
-            {% if S and S.count and S.caps_known %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
+            {% if S and S.count and S.caps_known and not (S.fitting and not S.fitting.fits_max) %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
+            {% if S and S.fitting and not S.fitting.fits_max %}<span class="clone-badge nofit" title="Doesn't fit even with every fitting skill at V">Won't fit</span>{% endif %}
           </p>
         </div>
         <div class="fit-buttons">
@@ -117,16 +118,48 @@
       <div class="tab-panel" id="skills-{{ f.id }}" role="tabpanel" hidden>
         {% if S and S.count %}
           <div class="skill-head">
-            <p class="skill-note">These are the <strong>bare minimum</strong> skills to fly this fit, including prerequisites. Extra levels will make it perform better.</p>
+            <p class="skill-note">These are the <strong>bare minimum</strong> skills to fly this exact fit, including prerequisites{% if S.fitting %} and the fitting skills it needs for CPU and power grid{% endif %}. Extra levels will make it perform better.</p>
             <button class="btn copy-btn" type="button" data-copy="plan-{{ f.id }}" data-toast="Skill plan copied. In EVE: Skills window > Skill Plans > Import from Clipboard">Copy as skill plan</button>
           </div>
+          {% set FC = S.fitting %}
+          {% if FC %}
+          <div class="fitcheck{% if not FC.fits_max %} bad{% endif %}">
+            <div class="fitcheck-head">
+              <h4>Fitting check</h4>
+              <p>
+                {% if not FC.fits_max %}<strong class="bad-text">This fit doesn't fit, even with every fitting skill at V.</strong> Something in it needs swapping.
+                {% elif FC.fits_min %}It fits with just the skills needed to use the modules.
+                {% elif FC.extra %}It needs <strong>fitting skills</strong> on top of the module skills; they're included below and in the skill plan{% if FC.alpha_fit %}, and an alpha can train them{% endif %}.
+                {% endif %}
+              </p>
+            </div>
+            <table class="fitcheck-table">
+              <thead><tr><th></th><th>Module skills only</th>{% if FC.recommended and not FC.fits_min %}<th>With fitting skills below</th>{% endif %}<th>All fitting skills V</th></tr></thead>
+              <tbody>
+              {% for key, label in (("cpu", "CPU"), ("power", "Power grid"), ("calibration", "Calibration")) %}
+                {% if key != "calibration" or FC.has_rigs %}
+                <tr>
+                  <th>{{ label }}</th>
+                  {% for col in ([FC.minimum] + ([FC.recommended] if FC.recommended and not FC.fits_min else []) + [FC.all_v]) %}
+                    {% set c = col[key] %}
+                    <td class="{{ 'ok' if c.ok else 'over' }}">{{ '%.1f'|format(c.used) }} / {{ '%.1f'|format(c.total) }}<small>{{ '%.1f left'|format(c.total - c.used) if c.ok else '%.1f over'|format(c.used - c.total) }}</small></td>
+                  {% endfor %}
+                </tr>
+                {% endif %}
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% elif S.count %}
+          <p class="skill-note muted">Fitting check unavailable right now (CPU and grid). Refresh in a minute.</p>
+          {% endif %}
           <div class="skill-groups">
             {% for g in S.groups %}
               <div class="skill-group">
                 <h4>{{ g.name }}</h4>
                 {% for sk in g.skills %}
                   <div class="skill-row{% if sk.omega %} is-omega{% endif %}">
-                    <span class="skill-name">{{ sk.name }}</span>
+                    <span class="skill-name">{{ sk.name }}{% if sk.fitting %} <span class="fit-tag" title="Needed so everything fits (CPU / power grid)">fitting</span>{% endif %}</span>
                     <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
                       {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
                     </span>

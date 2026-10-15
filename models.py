@@ -55,6 +55,14 @@ class KV(db.Model):
     updated_at = db.Column(db.DateTime, default=now, onupdate=now)
 
 
+class RefCache(db.Model):
+    """Game data from EVE Ref used by the fitting check (types, dogma effects, dogma attributes)."""
+    kind = db.Column(db.String(10), primary_key=True)
+    ref_id = db.Column(db.Integer, primary_key=True)
+    data = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=now, onupdate=now)
+
+
 class TypeInfo(db.Model):
     """Cache of EVE type name -> type ID and category, filled from ESI."""
     name_lower = db.Column(db.String(200), primary_key=True)

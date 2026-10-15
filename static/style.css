@@ -410,3 +410,26 @@ div.hull-render { border-radius: 12px; }
   .btn-label { display: none; }
   .brand { white-space: nowrap; }
 }
+
+/* fitting check (CPU / grid / calibration) */
+.fitcheck { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--line); border-left: 3px solid var(--ok); border-radius: 8px; background: var(--panel); }
+.fitcheck.bad { border-left-color: var(--danger); }
+.fitcheck-head h4 { margin: 0 0 2px; font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; }
+.fitcheck-head p { margin: 0 0 10px; color: var(--muted); font-size: .88rem; }
+.fitcheck-head strong { color: var(--text); }
+.bad-text { color: #f08a8a !important; }
+.fitcheck-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.fitcheck-table th, .fitcheck-table td { padding: 6px 8px; text-align: left; border-top: 1px solid rgba(255,255,255,.04); vertical-align: top; }
+.fitcheck-table thead th { color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-top: 0; }
+.fitcheck-table tbody th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+.fitcheck-table td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fitcheck-table td small { display: block; font-size: .75rem; }
+.fitcheck-table td.ok small { color: #8fe0ad; }
+.fitcheck-table td.over { color: #f08a8a; }
+.fitcheck-table td.over small { color: #f08a8a; }
+.fit-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; background: rgba(61,143,217,.15); color: #8cc0ee; border: 1px solid rgba(61,143,217,.35); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; vertical-align: 1px; }
+.clone-badge.nofit { background: rgba(224,82,82,.14); color: #f08a8a; border: 1px solid rgba(224,82,82,.4); }
+@media (max-width: 720px) {
+  .fitcheck { overflow-x: auto; }
+  .fitcheck-table { min-width: 420px; }
+}

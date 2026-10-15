@@ -6,13 +6,15 @@ data, published at Hoboleaks. Everything is cached in the database.
 """
 import json
 import time
+from datetime import timedelta
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 
 import requests
 
 from esi import ESI, PARAMS, session
-from models import KV, SkillInfo, TypeReqs, db
+import fitting
+from models import KV, RefCache, SkillInfo, TypeReqs, db, now
 
 # (requiredSkillN, requiredSkillNLevel) dogma attribute IDs
 REQ_ATTRS = ((182, 277), (183, 278), (184, 279), (1285, 1286), (1289, 1287), (1290, 1288))
@@ -252,6 +254,77 @@ def _plan_lines(need, infos):
     return lines
 
 
+# ---- game data for the fitting check (EVE Ref, cached in the database) ----
+REF_MAX_AGE = timedelta(days=30)  # refresh now and then so CCP rebalances come through
+
+
+def _ref_cached(kind, ids, url, shape):
+    """{id: shaped data} for ids, from the cache or EVE Ref. Fetch failures are left out."""
+    ids = {int(i) for i in ids if i}
+    if not ids:
+        return {}
+    rows = {r.ref_id: r for r in RefCache.query.filter(RefCache.kind == kind, RefCache.ref_id.in_(ids)).all()}
+    out, stale = {}, set()
+    cutoff = now() - REF_MAX_AGE
+    for rid, r in rows.items():
+        out[rid] = json.loads(r.data)
+        upd = r.updated_at.replace(tzinfo=cutoff.tzinfo) if r.updated_at and r.updated_at.tzinfo is None else r.updated_at
+        if not upd or upd < cutoff:
+            stale.add(rid)
+
+    def fetch(i):
+        r = session.get(f"{url}/{i}", timeout=20)
+        r.raise_for_status()
+        return shape(r.json())
+
+    fetched = _fetch_many(fetch, (ids - out.keys()) | stale)
+    for rid, data in fetched.items():
+        row = rows.get(rid)
+        if row:
+            row.data, row.updated_at = json.dumps(data), now()
+        else:
+            db.session.add(RefCache(kind=kind, ref_id=rid, data=json.dumps(data)))
+        out[rid] = data
+    if fetched:
+        try:
+            db.session.commit()
+        except Exception:  # another worker saved the same row first
+            db.session.rollback()
+    return {int(k): v for k, v in out.items()}
+
+
+def _shape_type(d):
+    return {"group_id": d.get("group_id"), "category_id": d.get("category_id"),
+            "attrs": {str(int(k)): v.get("value") for k, v in (d.get("dogma_attributes") or {}).items()},
+            "effects": [int(k) for k in (d.get("dogma_effects") or {})]}
+
+
+def _shape_effect(d):
+    return {"category": d.get("effect_category"), "modifiers": [
+        {"func": m.get("func"), "domain": m.get("domain"), "modified": m.get("modified_attribute_id"),
+         "modifying": m.get("modifying_attribute_id"), "op": m.get("operator"),
+         "skill": m.get("skill_type_id"), "group": m.get("group_id")} for m in (d.get("modifiers") or [])]}
+
+
+def _shape_attr(d):
+    return {"default": d.get("default_value") or 0.0, "stackable": bool(d.get("stackable", True))}
+
+
+def ref_types(ids):
+    out = _ref_cached("type", ids, REF_DATA, _shape_type)
+    for d in out.values():  # json turns int keys into strings
+        d["attrs"] = {int(k): v for k, v in d["attrs"].items()}
+    return out
+
+
+def ref_effects(ids):
+    return _ref_cached("effect", ids, "https://ref-data.everef.net/dogma_effects", _shape_effect)
+
+
+def ref_attrs(ids):
+    return _ref_cached("attr", ids, "https://ref-data.everef.net/dogma_attributes", _shape_attr)
+
+
 def fit_skills(layouts):
     """Build the Required skills view for each fit. layouts: {fit_id: layout}."""
     per_fit_types = {}
@@ -274,12 +347,32 @@ def fit_skills(layouts):
         per_fit_direct[fid] = direct
         direct_all.update(direct)
 
-    infos = skill_infos(direct_all.keys())
+    infos = skill_infos(set(direct_all) | set(fitting.FITTING_SKILLS))
     caps = alpha_caps()
+
+    def prereqs_ok(sid):
+        if caps is None:
+            return False
+        chain = _expand({sid: 1}, infos)
+        return all(lvl <= caps.get(p, 0) for p, lvl in chain.items() if p != sid)
 
     views = {}
     for fid, direct in per_fit_direct.items():
         need = _expand(direct, infos)
+        L = layouts[fid]
+        fit_check = None
+        try:
+            fit_check = fitting.check(L, need, reqs.get(L["ship_id"], {}).keys(), ref_types, ref_effects, ref_attrs,
+                                      caps=caps, prereqs_ok=prereqs_ok)
+        except Exception:  # never let the fitting maths break the page
+            fit_check = None
+        fitting_ids = set()
+        if fit_check and fit_check["extra"]:
+            for sid, lvl in fit_check["extra"].items():
+                if lvl > direct.get(sid, 0):
+                    fitting_ids.add(sid)
+                    direct = {**direct, sid: max(direct.get(sid, 0), lvl)}
+            need = _expand(direct, infos)
         groups = {}
         omega = False
         for sid, lvl in need.items():
@@ -288,7 +381,8 @@ def fit_skills(layouts):
             is_omega = cap is not None and lvl > cap
             omega = omega or is_omega
             groups.setdefault(info["group"], []).append(
-                {"id": sid, "name": info["name"], "level": lvl, "cap": cap, "omega": is_omega})
+                {"id": sid, "name": info["name"], "level": lvl, "cap": cap, "omega": is_omega,
+                 "fitting": sid in fitting_ids})
         views[fid] = {
             "groups": [{"name": g, "skills": sorted(s, key=lambda x: x["name"])} for g, s in sorted(groups.items())],
             "count": len(need),
@@ -296,5 +390,6 @@ def fit_skills(layouts):
             "caps_known": caps is not None,
             "complete": bool(need) or not per_fit_types[fid],
             "plan": "\n".join(_plan_lines(need, infos)),
+            "fitting": fit_check,
         }
     return views

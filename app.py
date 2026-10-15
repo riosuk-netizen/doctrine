@@ -197,6 +197,18 @@ def index():
     ship_ids = {f.id: (info.get(f.ship.lower()).type_id if info.get(f.ship.lower()) else None) for f in all_fits}
     ship_meta = skills.meta_groups(set(ship_ids.values()))
     classes = skills.ship_classes(set(ship_ids.values()))
+    # whether the logged-in pilot can fly each fit: "ready", "short" (missing skills) or "clone" (needs Omega)
+    ready, fly = {}, {}
+    pd = sso.pilot_data(session) if all_fits else None
+    have = pd["skills"] if pd else None
+    if have is not None:
+        views = skills.fit_skills(layouts_for(all_fits), {f.id: f.fitting_levels() for f in all_fits}, have)
+        for f in all_fits:
+            me = views.get(f.id, {}).get("me")
+            if me:
+                fly[f.id] = "ready" if me["ready"] else "short" if me["short"] else "clone"
+        for d in doctrines:
+            ready[d.id] = sum(1 for f in d.fits if fly.get(f.id) == "ready")
     search_fits = []
     for d in doctrines:
         for f in d.fits:
@@ -210,18 +222,13 @@ def index():
                 "fit": f.name, "ship": f.ship, "cls": classes.get(sid, ""), "roles": app.jinja_env.filters["tags"](f.role),
                 "author": d.author or "", "modules": modules,
                 "icon": f"{IMG}/{sid}/icon?size=64" if sid else "", "meta": ship_meta.get(sid, 0) if sid else 0,
+                "fly": fly.get(f.id, ""),
             })
     search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "",
                          "desc": markup.plain(d.description or "")[:300], "fits": len(d.fits)} for d in doctrines]
-    ready = {}
-    pd = sso.pilot_data(session) if all_fits else None
-    have = pd["skills"] if pd else None
-    if have is not None:
-        views = skills.fit_skills(layouts_for(all_fits), {f.id: f.fitting_levels() for f in all_fits}, have)
-        for d in doctrines:
-            ready[d.id] = sum(1 for f in d.fits if views.get(f.id, {}).get("me", {}).get("ready"))
     return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta, ready=ready,
-                           search_data={"fits": search_fits, "doctrines": search_doctrines, "meta": META_NAMES})
+                           search_data={"fits": search_fits, "doctrines": search_doctrines, "meta": META_NAMES,
+                                        "skills_known": have is not None})
 
 
 @app.route("/doctrine/<int:did>")

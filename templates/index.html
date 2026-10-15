@@ -29,6 +29,22 @@
     <input id="search" type="search" placeholder="Search ships, fits, doctrines, roles, modules or authors" autocomplete="off" aria-label="Search doctrines and fits" aria-controls="search-results">
     <kbd class="search-key" aria-hidden="true">/</kbd>
   </div>
+  {% if sso_on %}
+    <div class="fly-filter">
+      {% if pilot and pilot_skills_ok %}
+        <button type="button" id="fly-toggle" class="chip-toggle" aria-pressed="false">
+          <span class="chip-box" aria-hidden="true"></span> Only show fits I can fly
+        </button>
+        <span class="fly-hint muted">Checked against {{ pilot.name }}'s skills</span>
+      {% elif pilot %}
+        <a class="chip-toggle" href="{{ url_for('sso_login', next=request.path) }}"><span class="chip-box" aria-hidden="true"></span> Only show fits I can fly</a>
+        <span class="fly-hint muted">Log in with EVE again and allow the site to read your skills to use this</span>
+      {% else %}
+        <a class="chip-toggle" href="{{ url_for('sso_login', next=request.path) }}"><span class="chip-box" aria-hidden="true"></span> Only show fits I can fly</a>
+        <span class="fly-hint muted">Log in with EVE to use this</span>
+      {% endif %}
+    </div>
+  {% endif %}
   <div id="search-results" class="search-results" hidden aria-live="polite"></div>
   <script type="application/json" id="search-data">{{ search_data|tojson }}</script>
   <div class="doctrine-grid" id="doctrine-grid">

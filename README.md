@@ -8,6 +8,7 @@ Live at https://doctrine-li9g.onrender.com/
 
 **For pilots**
 * **Search** on the front page: type a ship, ship class (Frigate, Interceptor...), fit or doctrine name, role, module or author and matching fits appear as you type. Several words narrow it down, Enter opens the top result, Escape clears it, and `/` jumps to the box.
+* **Only show fits I can fly:** a toggle under the search box. Logged-in pilots tick it to list just the fits their skills are ready for, and it works with search too (e.g. tick it and type `tackle`). Search results also show **Can fly**, **Missing skills** or **Needs Omega** on each fit. The toggle is remembered in that browser.
 * Doctrine pages show each fit with the ship render and every module, charge and drone as its in-game icon, grouped into High, Mid, Low, Rigs, Subsystems, Drones and Cargo.
 * **Copy for EVE** copies the fit and opens a pop-up explaining how to import it (Fitting window, Import & Export button bottom left, Import from Clipboard). Pilots can tick "Don't show this again".
 * **Log in with EVE** (top bar) uses CCP's own login. Pilots then get **Save to EVE** on every fit and **Save all to EVE** on each doctrine, which put fits straight into their in-game Personal Fittings. The site only asks for permission to save fittings and read skills. The login sits in the pilot's browser session and nothing is stored in the database. Click the x by their name to log out. Copy for EVE still works without logging in.

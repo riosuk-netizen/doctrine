@@ -115,12 +115,28 @@
       ["", f.fit], ["", f.ship], ["Class", f.cls], ["Doctrine", f.doctrine],
       ...f.roles.map((r) => ["Role", r]), ["By", f.author], ...f.modules.map((m) => ["Fitted", m]),
     ];
+    const flyBtn = document.getElementById("fly-toggle");
+    const FLY_KEY = "rw-only-fly";
+    let onlyFly = false;
+    if (flyBtn) {
+      try { onlyFly = localStorage.getItem(FLY_KEY) === "1"; } catch (e) { /* private mode */ }
+      const paint = () => { flyBtn.setAttribute("aria-pressed", onlyFly ? "true" : "false"); flyBtn.classList.toggle("on", onlyFly); };
+      paint();
+      flyBtn.addEventListener("click", () => {
+        onlyFly = !onlyFly;
+        try { localStorage.setItem(FLY_KEY, onlyFly ? "1" : "0"); } catch (e) { /* private mode */ }
+        paint();
+        run();
+      });
+    }
+    const flyTag = { ready: '<span class="sr-fly ready">&#10003; Can fly</span>', short: '<span class="sr-fly short">Missing skills</span>', clone: '<span class="sr-fly clone">Needs Omega</span>' };
     function run() {
       const q = searchBox.value.trim().toLowerCase();
-      if (!q) { results.hidden = true; results.innerHTML = ""; grid.hidden = false; return; }
+      if (!q && !onlyFly) { results.hidden = true; results.innerHTML = ""; grid.hidden = false; return; }
       const words = q.split(/\s+/).filter(Boolean);
       const fits = [];
       data.fits.forEach((f) => {
+        if (onlyFly && f.fly !== "ready") return;
         const fields = fitFields(f).filter(([, v]) => v);
         const hay = fields.map(([, v]) => v.toLowerCase()).join(" \u0001 ");
         if (!words.every((w) => hay.includes(w))) return;
@@ -130,24 +146,26 @@
         fits.push({ f, why, score });
       });
       fits.sort((a, b) => b.score - a.score);
-      const docs = data.doctrines.filter((d) => {
+      const docs = onlyFly ? [] : data.doctrines.filter((d) => {
         const hay = [d.name, d.author, d.desc].join(" ").toLowerCase();
         return words.every((w) => hay.includes(w));
       });
       grid.hidden = true;
       results.hidden = false;
       if (!fits.length && !docs.length) {
-        results.innerHTML = '<div class="sr-empty">Nothing found for <strong>' + esc(searchBox.value.trim()) + "</strong>. Try a ship name, a role like tackle, or a module.</div>";
+        results.innerHTML = onlyFly
+          ? '<div class="sr-empty">' + (q ? "None of the fits matching <strong>" + esc(searchBox.value.trim()) + "</strong> are ready for you yet." : "You can't fly any of the fits yet.") + " Turn off <strong>Only show fits I can fly</strong> to see what you're missing.</div>"
+          : '<div class="sr-empty">Nothing found for <strong>' + esc(searchBox.value.trim()) + "</strong>. Try a ship name, a role like tackle, or a module.</div>";
         return;
       }
-      let html = '<p class="sr-head">' + fits.length + " fit" + (fits.length === 1 ? "" : "s") +
+      let html = '<p class="sr-head">' + fits.length + " fit" + (fits.length === 1 ? "" : "s") + (onlyFly ? " you can fly" : "") +
         (docs.length ? " and " + docs.length + " doctrine" + (docs.length === 1 ? "" : "s") : "") + "</p>";
       if (fits.length) {
         html += '<div class="sr-section"><h3>Fits</h3><div class="sr-list">' + fits.map(({ f, why }) => {
           const mark = data.meta[f.meta] ? '<span class="meta-mark m' + f.meta + '" aria-hidden="true"></span>' : "";
           const icon = f.icon ? '<span class="hull-thumb"><img src="' + esc(f.icon) + '" alt="" loading="lazy">' + mark + "</span>" : "";
           return '<a class="sr-item" href="' + esc(f.url) + '">' + icon + '<span class="sr-text">' +
-            '<span class="sr-title">' + hl(f.fit, words) + "</span>" +
+            '<span class="sr-title">' + hl(f.fit, words) + (f.fly && flyTag[f.fly] ? " " + flyTag[f.fly] : "") + "</span>" +
             '<span class="sr-sub">' + hl(f.ship, words) + (f.cls ? " · " + hl(f.cls, words) : "") + " · " + hl(f.doctrine, words) + "</span>" +
             (why ? '<span class="sr-why">' + esc(why[0]) + ": " + hl(why[1], words) + "</span>" : "") +
             "</span></a>";
@@ -171,7 +189,7 @@
         e.preventDefault(); searchBox.focus();
       }
     });
-    if (searchBox.value) run();
+    if (searchBox.value || onlyFly) run();
   }
 
   // Save to EVE: sends the fit (or the whole doctrine) to the logged-in character's fittings

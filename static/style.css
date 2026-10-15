@@ -502,3 +502,17 @@ div.hull-render { border-radius: 12px; }
 .skill-intro { display: flex; flex-direction: column; gap: 4px; }
 .train-line strong, .train-time { color: var(--text); }
 .train-icon { color: var(--accent); margin-right: 2px; }
+
+/* "Only show fits I can fly" toggle next to the search */
+.fly-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -6px 0 18px; }
+.chip-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+.chip-toggle:hover { border-color: #3a4a60; }
+.chip-box { width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--muted); display: inline-grid; place-items: center; }
+.chip-toggle.on { border-color: rgba(79,191,122,.6); background: rgba(79,191,122,.12); color: #a9e8c0; }
+.chip-toggle.on .chip-box { background: var(--ok); border-color: var(--ok); }
+.chip-toggle.on .chip-box::after { content: ""; width: 4px; height: 8px; border: solid #06140b; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.fly-hint { font-size: .82rem; }
+.sr-fly { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; vertical-align: 1px; }
+.sr-fly.ready { color: #8fe0ad; background: rgba(79,191,122,.14); }
+.sr-fly.short { color: #f29a9a; background: rgba(224,82,82,.13); }
+.sr-fly.clone { color: var(--accent-2); background: rgba(232,163,60,.14); }

@@ -450,7 +450,7 @@ def logout():
     return redirect(url_for("index"))
 
 
-# ---------- EVE login and Save to EVE ----------
+# ---------- EVE login and Push to EVE ----------
 
 def _safe_next(nxt):
     return nxt if nxt and nxt.startswith("/") and not nxt.startswith("//") else url_for("index")
@@ -481,7 +481,7 @@ def sso_callback():
         flash("Couldn't log in with EVE just now. Please try again in a minute.", "warn")
         return redirect(nxt)
     session.permanent = True
-    flash(f"Logged in as {session.get('sso_char_name')}. Save to EVE now puts fits straight into your fittings.", "ok")
+    flash(f"Logged in as {session.get('sso_char_name')}. Push to EVE now puts fits straight into your fittings.", "ok")
     return redirect(nxt)
 
 
@@ -524,12 +524,12 @@ def _save_fits(fits, doctrine_name):
                 break
     who = session.get("sso_char_name", "your character")
     if saved and not failed:
-        message = (f"Saved to {who}'s fittings." if len(saved) == 1
-                   else f"Saved {len(saved)} fits to {who}'s fittings.")
+        message = (f"Pushed to {who}'s fittings. Find it in game under Fitting > Personal Fittings." if len(saved) == 1
+                   else f"Pushed {len(saved)} fits to {who}'s fittings. Find them in game under Fitting > Personal Fittings.")
     elif saved:
-        message = f"Saved {len(saved)} of {len(fits)}. " + "; ".join(failed[:3])
+        message = f"Pushed {len(saved)} of {len(fits)}. " + "; ".join(failed[:3])
     else:
-        message = "Not saved. " + "; ".join(failed[:3])
+        message = "Not pushed. " + "; ".join(failed[:3])
     if skipped and saved:
         message += " Left out (not allowed in saved fittings): " + ", ".join(sorted(skipped)[:5]) + "."
     return jsonify(ok=bool(saved) and not failed, saved=len(saved), message=message)

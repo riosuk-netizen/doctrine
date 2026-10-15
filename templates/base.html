@@ -48,7 +48,7 @@
             <a class="pilot-out" href="{{ url_for('sso_logout', next=request.full_path) }}" title="Log out of EVE" aria-label="Log out of EVE">&times;</a>
           </span>
         {% else %}
-          <a class="btn btn-eve" href="{{ url_for('sso_login', next=request.full_path) }}" title="Log in with EVE Online to save fits straight to your character">
+          <a class="btn btn-eve" href="{{ url_for('sso_login', next=request.full_path) }}" title="Log in with EVE Online to push fits straight to your character">
             <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span class="btn-label">Log in with EVE</span><span class="btn-short">EVE</span>
           </a>

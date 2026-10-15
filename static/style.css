@@ -465,7 +465,7 @@ div.hull-render { border-radius: 12px; }
 .sr-title, .sr-sub, .sr-why { display: block; }
 .doctrine-grid[hidden], .search-results[hidden] { display: none; }
 
-/* EVE login and Save to EVE */
+/* EVE login and Push to EVE */
 .btn-eve { display: inline-flex; align-items: center; gap: 6px; border-color: #2c5878; background: #10283a; color: #cfe8ff; }
 .btn-eve:hover { border-color: #3f7fae; background: #153349; }
 .pilot { display: inline-flex; align-items: center; gap: 8px; padding: 3px 6px 3px 3px; border: 1px solid var(--line, #263247); border-radius: 8px; background: #111925; font-size: .9rem; white-space: nowrap; }
@@ -519,8 +519,13 @@ div.hull-render { border-radius: 12px; }
 
 /* in-game skill description on hover (tap on phones) */
 .skill-name.has-tip { position: relative; cursor: help; text-decoration: underline dotted rgba(127,142,163,.5); text-underline-offset: 3px; outline: none; }
-.skill-tip { display: none; position: absolute; left: 0; top: calc(100% + 6px); z-index: 30; width: min(340px, 80vw); padding: 10px 12px; border-radius: 8px;
+.skill-tip { display: none; position: fixed; left: 0; top: 0; z-index: 60; width: min(340px, 80vw); padding: 10px 12px; border-radius: 8px;
   background: #0b1018; border: 1px solid #2c3a4e; box-shadow: 0 10px 30px rgba(0,0,0,.55); color: var(--text); font-size: .82rem; line-height: 1.45; font-weight: 400; white-space: pre-line; text-align: left; cursor: default; }
 .skill-tip strong { display: block; color: var(--accent-2); font-size: .88rem; margin-bottom: 2px; }
 .tip-meta { display: block; color: var(--muted); font-size: .74rem; margin-bottom: 6px; }
 .skill-name.has-tip:hover .skill-tip, .skill-name.has-tip:focus .skill-tip, .skill-name.has-tip.show .skill-tip { display: block; }
+.how-label { flex: 0 0 100%; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: -2px; }
+.how-push { margin-top: 12px; }
+.how-push .step b { background: #3f7fae; color: #fff; }
+.step a { color: #cfe8ff; font-weight: 600; }
+@media (max-width: 720px) { .how-label { text-align: center; } }

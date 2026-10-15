@@ -192,7 +192,7 @@
     if (searchBox.value || onlyFly) run();
   }
 
-  // Save to EVE: sends the fit (or the whole doctrine) to the logged-in character's fittings
+  // Push to EVE: sends the fit (or the whole doctrine) to the logged-in character's fittings
   document.addEventListener("click", async (e) => {
     const btn = e.target.closest(".save-eve");
     if (!btn || btn.disabled) return;
@@ -200,7 +200,7 @@
     if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
     const label = btn.textContent;
     btn.disabled = true;
-    btn.textContent = "Saving...";
+    btn.textContent = "Pushing...";
     let res = null;
     try {
       const r = await fetch(btn.dataset.url, { method: "POST", headers: { "X-Requested-With": "fetch" } });
@@ -218,18 +218,44 @@
     showToast(res.message);
     if (res.ok) {
       btn.classList.add("copied");
-      btn.textContent = "Saved!";
+      btn.textContent = "Pushed!";
       setTimeout(() => { btn.classList.remove("copied"); btn.textContent = label; }, 2200);
     } else {
       btn.textContent = label;
     }
   });
 
+  // Skill descriptions: place the box next to the skill name, flipping above it near the bottom of the screen
+  function placeTip(name) {
+    const tip = name.querySelector(".skill-tip");
+    if (!tip) return;
+    const r = name.getBoundingClientRect();
+    tip.style.visibility = "hidden";
+    tip.style.display = "block";
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.display = "";
+    tip.style.visibility = "";
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+    const below = r.bottom + 6;
+    const top = below + h > window.innerHeight - 8 && r.top - h - 6 > 8 ? r.top - h - 6 : below;
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+  ["mouseover", "focusin"].forEach((ev) => document.addEventListener(ev, (e) => {
+    const name = e.target.closest && e.target.closest(".skill-name.has-tip");
+    if (name && !name.contains(e.relatedTarget)) placeTip(name);
+  }));
+  window.addEventListener("scroll", () => {
+    document.querySelectorAll(".skill-name.show").forEach((n) => n.classList.remove("show"));
+    const hovered = document.querySelector(".skill-name.has-tip:hover");
+    if (hovered) placeTip(hovered);
+  }, { passive: true });
+
   // Skill descriptions: tap a skill name on touch screens to open or close it
   document.addEventListener("click", (e) => {
     const name = e.target.closest(".skill-name.has-tip");
     document.querySelectorAll(".skill-name.show").forEach((n) => { if (n !== name) n.classList.remove("show"); });
-    if (name && window.matchMedia("(hover: none)").matches) name.classList.toggle("show");
+    if (name && window.matchMedia("(hover: none)").matches) { placeTip(name); name.classList.toggle("show"); }
   });
 
   // Tap a module tile on touch screens to see its name

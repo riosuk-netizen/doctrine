@@ -95,6 +95,85 @@
     if (zero) zero.checked = true;
   });
 
+  // Front page search: ships, fits, doctrines, roles, modules, authors
+  const searchBox = document.getElementById("search");
+  const searchData = document.getElementById("search-data");
+  if (searchBox && searchData) {
+    const data = JSON.parse(searchData.textContent);
+    const results = document.getElementById("search-results");
+    const grid = document.getElementById("doctrine-grid");
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const hl = (text, words) => {
+      let out = esc(text);
+      words.forEach((w) => {
+        const re = new RegExp("(" + esc(w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig");
+        out = out.replace(re, "<mark>$1</mark>");
+      });
+      return out;
+    };
+    const fitFields = (f) => [
+      ["", f.fit], ["", f.ship], ["Class", f.cls], ["Doctrine", f.doctrine],
+      ...f.roles.map((r) => ["Role", r]), ["By", f.author], ...f.modules.map((m) => ["Fitted", m]),
+    ];
+    function run() {
+      const q = searchBox.value.trim().toLowerCase();
+      if (!q) { results.hidden = true; results.innerHTML = ""; grid.hidden = false; return; }
+      const words = q.split(/\s+/).filter(Boolean);
+      const fits = [];
+      data.fits.forEach((f) => {
+        const fields = fitFields(f).filter(([, v]) => v);
+        const hay = fields.map(([, v]) => v.toLowerCase()).join(" \u0001 ");
+        if (!words.every((w) => hay.includes(w))) return;
+        // the first match outside the name / ship line explains why it showed up
+        const why = fields.find(([k, v]) => k && k !== "Doctrine" && k !== "Class" && words.some((w) => v.toLowerCase().includes(w)));
+        const score = words.reduce((n, w) => n + (f.fit.toLowerCase().includes(w) || f.ship.toLowerCase().includes(w) ? 2 : 1), 0);
+        fits.push({ f, why, score });
+      });
+      fits.sort((a, b) => b.score - a.score);
+      const docs = data.doctrines.filter((d) => {
+        const hay = [d.name, d.author, d.desc].join(" ").toLowerCase();
+        return words.every((w) => hay.includes(w));
+      });
+      grid.hidden = true;
+      results.hidden = false;
+      if (!fits.length && !docs.length) {
+        results.innerHTML = '<div class="sr-empty">Nothing found for <strong>' + esc(searchBox.value.trim()) + "</strong>. Try a ship name, a role like tackle, or a module.</div>";
+        return;
+      }
+      let html = '<p class="sr-head">' + fits.length + " fit" + (fits.length === 1 ? "" : "s") +
+        (docs.length ? " and " + docs.length + " doctrine" + (docs.length === 1 ? "" : "s") : "") + "</p>";
+      if (fits.length) {
+        html += '<div class="sr-section"><h3>Fits</h3><div class="sr-list">' + fits.map(({ f, why }) => {
+          const mark = data.meta[f.meta] ? '<span class="meta-mark m' + f.meta + '" aria-hidden="true"></span>' : "";
+          const icon = f.icon ? '<span class="hull-thumb"><img src="' + esc(f.icon) + '" alt="" loading="lazy">' + mark + "</span>" : "";
+          return '<a class="sr-item" href="' + esc(f.url) + '">' + icon + '<span class="sr-text">' +
+            '<span class="sr-title">' + hl(f.fit, words) + "</span>" +
+            '<span class="sr-sub">' + hl(f.ship, words) + (f.cls ? " · " + hl(f.cls, words) : "") + " · " + hl(f.doctrine, words) + "</span>" +
+            (why ? '<span class="sr-why">' + esc(why[0]) + ": " + hl(why[1], words) + "</span>" : "") +
+            "</span></a>";
+        }).join("") + "</div></div>";
+      }
+      if (docs.length) {
+        html += '<div class="sr-section"><h3>Doctrines</h3><div class="sr-list">' + docs.map((d) =>
+          '<a class="sr-item" href="' + esc(d.url) + '"><span class="sr-text"><span class="sr-title">' + hl(d.name, words) + "</span>" +
+          '<span class="sr-sub">' + d.fits + " fit" + (d.fits === 1 ? "" : "s") + (d.author ? " · by " + hl(d.author, words) : "") + "</span></span></a>"
+        ).join("") + "</div></div>";
+      }
+      results.innerHTML = html;
+    }
+    searchBox.addEventListener("input", run);
+    searchBox.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { searchBox.value = ""; run(); }
+      if (e.key === "Enter") { const first = results.querySelector(".sr-item"); if (first) first.click(); }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "/" && document.activeElement !== searchBox && !/input|textarea/i.test(document.activeElement.tagName)) {
+        e.preventDefault(); searchBox.focus();
+      }
+    });
+    if (searchBox.value) run();
+  }
+
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {
     const tile = e.target.closest(".tile[data-name]");

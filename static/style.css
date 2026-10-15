@@ -434,3 +434,31 @@ div.hull-render { border-radius: 12px; }
 .fs-boxes input:checked ~ .fs-box.omega { background: var(--accent); border-color: var(--accent); }
 .fs-boxes input:focus-visible + .fs-box { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* front page search */
+.search { position: relative; margin: 0 0 18px; }
+.search input { width: 100%; padding: 13px 44px 13px 44px; font-size: 1rem; border-radius: 10px; background: var(--panel); }
+.search-icon { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search-key { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); }
+.search input:focus ~ .search-key, .search input:not(:placeholder-shown) ~ .search-key { display: none; }
+.search-results { margin: 0 0 24px; }
+.sr-head { margin: 0 0 10px; color: var(--muted); font-size: .85rem; }
+.sr-section + .sr-section { margin-top: 18px; }
+.sr-section h3 { margin: 0 0 8px; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.sr-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.sr-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-width: 0;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--text); text-decoration: none;
+}
+.sr-item:hover, .sr-item:focus-visible { border-color: var(--accent); outline: none; }
+.sr-item .hull-thumb { flex: none; }
+.sr-text { min-width: 0; }
+.sr-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-sub { color: var(--muted); font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-why { color: var(--accent-2); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-item mark { background: rgba(232,163,60,.25); color: inherit; border-radius: 2px; padding: 0 1px; }
+.sr-empty { padding: 24px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
+@media (max-width: 720px) { .sr-list { grid-template-columns: 1fr; } .search-key { display: none; } }
+.sr-text { display: flex; flex-direction: column; gap: 1px; flex: 1; overflow: hidden; }
+.sr-title, .sr-sub, .sr-why { display: block; }
+.doctrine-grid[hidden], .search-results[hidden] { display: none; }

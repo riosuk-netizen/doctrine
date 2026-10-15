@@ -191,7 +191,25 @@ def index():
     info = esi.resolve({f.ship for f in all_fits})
     ship_ids = {f.id: (info.get(f.ship.lower()).type_id if info.get(f.ship.lower()) else None) for f in all_fits}
     ship_meta = skills.meta_groups(set(ship_ids.values()))
-    return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta)
+    classes = skills.ship_classes(set(ship_ids.values()))
+    search_fits = []
+    for d in doctrines:
+        for f in d.fits:
+            try:
+                modules = sorted(all_names(parse_fit(f.eft)) - {f.ship})
+            except EFTError:
+                modules = []
+            sid = ship_ids.get(f.id)
+            search_fits.append({
+                "doctrine": d.name, "url": url_for("doctrine", did=d.id) + f"#fit-{f.id}",
+                "fit": f.name, "ship": f.ship, "cls": classes.get(sid, ""), "roles": app.jinja_env.filters["tags"](f.role),
+                "author": d.author or "", "modules": modules,
+                "icon": f"{IMG}/{sid}/icon?size=64" if sid else "", "meta": ship_meta.get(sid, 0) if sid else 0,
+            })
+    search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "",
+                         "desc": markup.plain(d.description or "")[:300], "fits": len(d.fits)} for d in doctrines]
+    return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta,
+                           search_data={"fits": search_fits, "doctrines": search_doctrines, "meta": META_NAMES})
 
 
 @app.route("/doctrine/<int:did>")

@@ -333,3 +333,23 @@ def fit_skills(layouts, fitting=None):
         else:
             views[fid]["fitting"] = []
     return views
+
+
+def ship_classes(type_ids):
+    """{type_id: ship class name, e.g. 'Logistics Frigate'}, cached in the database."""
+    ids = {int(t) for t in type_ids if t}
+    row = db.session.get(KV, "ship_classes")
+    known = {int(k): v for k, v in json.loads(row.value).items()} if row else {}
+    missing = ids - known.keys()
+    if missing:
+        types = _fetch_many(_get_type, missing)
+        groups = _fetch_many(_group_name, {d["group_id"] for d in types.values() if "group_id" in d})
+        added = {tid: groups[d["group_id"]] for tid, d in types.items() if d.get("group_id") in groups}
+        if added:
+            known.update(added)
+            db.session.merge(KV(key="ship_classes", value=json.dumps({str(k): v for k, v in known.items()})))
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+    return {t: known[t] for t in ids if t in known}

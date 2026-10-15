@@ -11,6 +11,7 @@ from flask import (Flask, Response, abort, flash, jsonify, redirect,
 import esi
 import markup
 import skills
+import sso
 from eft import (DISPLAY_ORDER, LABELS, EFTError, all_names, build_layout,
                  doctrine_xml, parse_fit, split_fits)
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -29,6 +30,8 @@ for prefix in ("postgres://", "postgresql://"):
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # sent on the EVE login return trip, not on other sites' form posts
+app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("RENDER"))  # https only once live on Render
 
 db.init_app(app)
 with app.app_context():
@@ -136,7 +139,8 @@ def inject():
         return url_for("static", filename=filename, v=v)
 
     return {"asset": asset, "is_admin": is_admin(), "open_mode": not ADMIN_PASSWORD, "icon": icon,
-            "render_img": render_img, "ORDER": DISPLAY_ORDER, "LABELS": LABELS}
+            "render_img": render_img, "ORDER": DISPLAY_ORDER, "LABELS": LABELS,
+            "sso_on": sso.enabled(), "pilot": sso.character(session)}
 
 
 def layouts_for(fits):
@@ -426,6 +430,103 @@ def login():
 def logout():
     session.pop("admin", None)
     return redirect(url_for("index"))
+
+
+# ---------- EVE login and Save to EVE ----------
+
+def _safe_next(nxt):
+    return nxt if nxt and nxt.startswith("/") and not nxt.startswith("//") else url_for("index")
+
+
+@app.route("/sso/login")
+def sso_login():
+    if not sso.enabled():
+        flash("EVE login isn't set up on this site yet.", "warn")
+        return redirect(url_for("index"))
+    session["sso_next"] = _safe_next(request.args.get("next", ""))
+    return redirect(sso.login_url(session, url_for("sso_callback", _external=True)))
+
+
+@app.route("/sso/callback")
+def sso_callback():
+    nxt = _safe_next(session.pop("sso_next", ""))
+    if request.args.get("error") or not request.args.get("code"):
+        flash("EVE login was cancelled.", "warn")
+        return redirect(nxt)
+    try:
+        sso.finish_login(session, request.args["code"], request.args.get("state", ""))
+    except ValueError as e:
+        flash(str(e), "warn")
+        return redirect(nxt)
+    except Exception:
+        app.logger.exception("EVE SSO login failed")
+        flash("Couldn't log in with EVE just now. Please try again in a minute.", "warn")
+        return redirect(nxt)
+    session.permanent = True
+    flash(f"Logged in as {session.get('sso_char_name')}. Save to EVE now puts fits straight into your fittings.", "ok")
+    return redirect(nxt)
+
+
+@app.route("/sso/logout")
+def sso_logout():
+    sso.logout(session)
+    flash("Logged out of EVE.", "ok")
+    return redirect(_safe_next(request.args.get("next", "")))
+
+
+def _save_fits(fits, doctrine_name):
+    """Save fits to the logged-in character. Returns a JSON response for the page script."""
+    if not sso.enabled():
+        return jsonify(ok=False, message="EVE login isn't set up on this site yet."), 400
+    if not sso.character(session):
+        return jsonify(ok=False, login=True, message="Log in with EVE first."), 401
+    lays = layouts_for(fits)
+    saved, failed, skipped = [], [], set()
+    for f in fits:
+        L = lays[f.id]
+        if not L["ship_id"]:
+            failed.append(f"{f.name}: ship not recognised")
+            continue
+        desc = markup.plain(f.notes or "").strip() or f"Rift Watch doctrine: {doctrine_name}"
+        body, skip = sso.build_fitting(f.name, desc, L)
+        skipped.update(skip)
+        try:
+            ok, msg = sso.save_fitting(session, body)
+        except sso.NotLoggedIn:
+            return jsonify(ok=False, login=True, saved=len(saved),
+                           message="Your EVE login has run out. Log in again to carry on."), 401
+        except Exception:
+            app.logger.exception("Saving fit to EVE failed")
+            ok, msg = False, "couldn't reach EVE"
+        if ok:
+            saved.append(f.name)
+        else:
+            failed.append(f"{f.name}: {msg}")
+            if "full" in msg:
+                break
+    who = session.get("sso_char_name", "your character")
+    if saved and not failed:
+        message = (f"Saved to {who}'s fittings." if len(saved) == 1
+                   else f"Saved {len(saved)} fits to {who}'s fittings.")
+    elif saved:
+        message = f"Saved {len(saved)} of {len(fits)}. " + "; ".join(failed[:3])
+    else:
+        message = "Not saved. " + "; ".join(failed[:3])
+    if skipped and saved:
+        message += " Left out (not allowed in saved fittings): " + ", ".join(sorted(skipped)[:5]) + "."
+    return jsonify(ok=bool(saved) and not failed, saved=len(saved), message=message)
+
+
+@app.post("/fit/<int:fid>/save-to-eve")
+def fit_save_eve(fid):
+    f = db.get_or_404(Fit, fid)
+    return _save_fits([f], f.doctrine.name)
+
+
+@app.post("/doctrine/<int:did>/save-to-eve")
+def doctrine_save_eve(did):
+    d = db.get_or_404(Doctrine, did)
+    return _save_fits(list(d.fits), d.name)
 
 
 @app.errorhandler(404)

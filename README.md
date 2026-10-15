@@ -10,6 +10,8 @@ Live at https://doctrine-li9g.onrender.com/
 * **Search** on the front page: type a ship, ship class (Frigate, Interceptor...), fit or doctrine name, role, module or author and matching fits appear as you type. Several words narrow it down, Enter opens the top result, Escape clears it, and `/` jumps to the box.
 * Doctrine pages show each fit with the ship render and every module, charge and drone as its in-game icon, grouped into High, Mid, Low, Rigs, Subsystems, Drones and Cargo.
 * **Copy for EVE** copies the fit and opens a pop-up explaining how to import it (Fitting window, Import & Export button bottom left, Import from Clipboard). Pilots can tick "Don't show this again".
+* **Log in with EVE** (top bar) uses CCP's own login. Pilots then get **Save to EVE** on every fit and **Save all to EVE** on each doctrine, which put fits straight into their in-game Personal Fittings. The site only asks for permission to save fittings. The login sits in the pilot's browser session and nothing is stored in the database. Click the x by their name to log out. Copy for EVE still works without logging in.
+* Loaded ammo isn't part of a saved fitting in EVE, so only ammo listed in the fit's cargo section goes across. Implants are left out too.
 * **Download all (XML)** imports a whole doctrine at once via Import & Export > Import from File.
 * Each fit has three tabs: **Fit**, **Required skills** and **Module list**.
 * **Required skills** lists every skill needed including prerequisites, with five level pips per skill. Levels an alpha clone can't train are gold, and each fit gets an **Alpha OK** or **Omega** badge. **Copy as skill plan** copies the plan for EVE's skill planner.
@@ -42,6 +44,7 @@ Live at https://doctrine-li9g.onrender.com/
 | `eft.py` | EFT parsing, slot layout, XML export |
 | `esi.py` | Name to type ID lookup, character lookup |
 | `skills.py` | Required skills, prerequisites, alpha caps, skill plan text |
+| `sso.py` | EVE login (SSO) and saving fits to a character's fittings through ESI |
 | `markup.py` | Discord-style formatting to safe HTML |
 | `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, login |
 | `static/` | `style.css`, `app.js`, logo (gif and png), share banner `og-banner.png` |
@@ -52,6 +55,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Environment variables:**
   * `ADMIN_PASSWORD`: the editor password. If it's empty, anyone can edit and a warning banner shows.
   * `SECRET_KEY`: any long random string.
+  * `EVE_CLIENT_ID` and `EVE_CLIENT_SECRET`: from the app at developers.eveonline.com, with the scope `esi-fittings.write_fittings.v1` and the callback URL `https://<site address>/sso/callback`. Leave them out and the EVE login buttons simply don't show.
   * `DATABASE_URL`: Postgres connection string from Neon (free, doesn't expire). Without it the site falls back to SQLite, which Render wipes on every redeploy.
 * New tables are created automatically on start, and new columns added in later versions (author, author_id) are added to existing tables automatically, so updates never need a manual database step.
 * Free Render plans sleep after about 15 minutes idle; the first visit after that takes up to a minute. The $7 a month instance keeps it awake.

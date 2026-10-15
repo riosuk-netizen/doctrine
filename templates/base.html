@@ -40,6 +40,20 @@
         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7M6 9v11h4.5v-6h3v6H18V9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="btn-label">Home</span>
       </a>
+      {% if sso_on %}
+        {% if pilot %}
+          <span class="pilot" title="Logged in to EVE as {{ pilot.name }}">
+            <img src="https://images.evetech.net/characters/{{ pilot.id }}/portrait?size=64" alt="" width="26" height="26">
+            <span class="btn-label">{{ pilot.name }}</span>
+            <a class="pilot-out" href="{{ url_for('sso_logout', next=request.full_path) }}" title="Log out of EVE" aria-label="Log out of EVE">&times;</a>
+          </span>
+        {% else %}
+          <a class="btn btn-eve" href="{{ url_for('sso_login', next=request.full_path) }}" title="Log in with EVE Online to save fits straight to your character">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span class="btn-label">Log in with EVE</span><span class="btn-short">EVE</span>
+          </a>
+        {% endif %}
+      {% endif %}
       {% if is_admin %}
         <a class="btn btn-primary" href="{{ url_for('doctrine_new') }}">+ New doctrine</a>
         {% if not open_mode %}<a class="btn btn-ghost" href="{{ url_for('logout') }}">Log out</a>{% endif %}

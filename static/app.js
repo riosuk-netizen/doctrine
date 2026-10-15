@@ -5,7 +5,7 @@
     toast.textContent = msg;
     toast.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), Math.max(2600, msg.length * 55));
   }
 
   // "How to paste into EVE" pop-up, shown after copying a fit
@@ -173,6 +173,39 @@
     });
     if (searchBox.value) run();
   }
+
+  // Save to EVE: sends the fit (or the whole doctrine) to the logged-in character's fittings
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".save-eve");
+    if (!btn || btn.disabled) return;
+    if (btn.dataset.login) { window.location.href = btn.dataset.login; return; }
+    if (btn.dataset.confirm && !window.confirm(btn.dataset.confirm)) return;
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+    let res = null;
+    try {
+      const r = await fetch(btn.dataset.url, { method: "POST", headers: { "X-Requested-With": "fetch" } });
+      res = await r.json();
+    } catch (err) {
+      res = { ok: false, message: "Couldn't reach the site. Check your connection and try again." };
+    }
+    btn.disabled = false;
+    if (res.login && !res.saved) {
+      showToast(res.message + " Taking you to the EVE login...");
+      setTimeout(() => { window.location.href = "/sso/login?next=" + encodeURIComponent(location.pathname + location.hash); }, 1400);
+      btn.textContent = label;
+      return;
+    }
+    showToast(res.message);
+    if (res.ok) {
+      btn.classList.add("copied");
+      btn.textContent = "Saved!";
+      setTimeout(() => { btn.classList.remove("copied"); btn.textContent = label; }, 2200);
+    } else {
+      btn.textContent = label;
+    }
+  });
 
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {

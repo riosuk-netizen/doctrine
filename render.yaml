@@ -12,6 +12,11 @@ services:
         generateValue: true
       - key: ADMIN_PASSWORD
         sync: false
+      # EVE SSO app from developers.eveonline.com
+      - key: EVE_CLIENT_ID
+        sync: false
+      - key: EVE_CLIENT_SECRET
+        sync: false
       # Postgres connection string from Neon (neon.tech). Set it in the Render dashboard.
       - key: DATABASE_URL
         sync: false

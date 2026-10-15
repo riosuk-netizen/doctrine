@@ -232,6 +232,8 @@ textarea { resize: vertical; }
   .hero-text h1 { font-size: 2rem; }
   .how-to { justify-content: center; }
   .fit-buttons .copy-btn { flex: 1 1 100%; }
+  .fit-buttons .save-eve + .copy-btn, .fit-buttons .copy-btn:has(+ .save-eve) { flex: 1 1 45%; }
+  .fit-buttons .save-eve { flex: 1 1 45%; justify-content: center; }
 }
 
 /* tabs */
@@ -462,3 +464,13 @@ div.hull-render { border-radius: 12px; }
 .sr-text { display: flex; flex-direction: column; gap: 1px; flex: 1; overflow: hidden; }
 .sr-title, .sr-sub, .sr-why { display: block; }
 .doctrine-grid[hidden], .search-results[hidden] { display: none; }
+
+/* EVE login and Save to EVE */
+.btn-eve { display: inline-flex; align-items: center; gap: 6px; border-color: #2c5878; background: #10283a; color: #cfe8ff; }
+.btn-eve:hover { border-color: #3f7fae; background: #153349; }
+.pilot { display: inline-flex; align-items: center; gap: 8px; padding: 3px 6px 3px 3px; border: 1px solid var(--line, #263247); border-radius: 8px; background: #111925; font-size: .9rem; white-space: nowrap; }
+.pilot img { border-radius: 5px; display: block; }
+.pilot-out { color: var(--muted, #8a97ab); text-decoration: none; font-size: 1.1rem; line-height: 1; padding: 0 4px; border-radius: 4px; }
+.pilot-out:hover { color: var(--text, #e6edf6); background: #1b2535; }
+.btn-short { display: none; }
+@media (max-width: 480px) { .btn-eve .btn-short { display: inline; } .topbar .btn-eve .btn-icon { display: none; } .pilot { padding-right: 2px; } }

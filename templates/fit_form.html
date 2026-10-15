@@ -16,7 +16,7 @@
       <legend>Fitting skills <span class="hint">the extra skills pilots need so the whole fit fits (CPU and power grid). Click a box to set the level, click the same box again to clear it.</span></legend>
       {% for row in fitting_rows %}
         <div class="fs-row" role="radiogroup" aria-label="{{ row.name }}">
-          <span class="fs-name">{{ row.name }}{% if row.cap is not none %} <small>alpha max {{ row.cap }}</small>{% endif %}</span>
+          <span class="fs-name"><span class="skill-name{% if row.desc %} has-tip{% endif %}"{% if row.desc %} tabindex="0"{% endif %}>{{ row.name }}{% if row.desc %}<span class="skill-tip" role="tooltip"><strong>{{ row.name }}</strong><span class="tip-meta">Rank {{ row.rank }}{% if row.attrs %} &middot; {{ row.attrs }}{% endif %}</span>{{ row.desc }}</span>{% endif %}</span>{% if row.cap is not none %} <small>alpha max {{ row.cap }}</small>{% endif %}</span>
           <span class="fs-boxes">
             {% for i in range(5, 0, -1) %}
               <input type="radio" name="fs_{{ row.id }}" id="fs_{{ row.id }}_{{ i }}" value="{{ i }}" {% if row.level == i %}checked{% endif %}>

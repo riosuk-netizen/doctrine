@@ -350,8 +350,14 @@ def fitting_form(f, form=None):
             except ValueError:
                 pass
     caps = skills.alpha_caps() or {}
-    return {"fitting_rows": [{"id": sid, "name": name, "level": current.get(sid, 0), "cap": caps.get(sid)}
-                             for sid, name in skills.FITTING_SKILLS]}
+    tinfo = skills.train_infos({sid for sid, _ in skills.FITTING_SKILLS})
+    rows = []
+    for sid, name in skills.FITTING_SKILLS:
+        t = tinfo.get(sid)
+        rows.append({"id": sid, "name": name, "level": current.get(sid, 0), "cap": caps.get(sid),
+                     "rank": t[0] if t else None, "desc": t[3] if t else "",
+                     "attrs": " / ".join(a.capitalize() for a in t[1:3] if a) if t else ""})
+    return {"fitting_rows": rows}
 
 
 @app.route("/fit/<int:fid>/edit", methods=["GET", "POST"])

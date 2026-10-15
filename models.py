@@ -78,3 +78,15 @@ class Access(db.Model):
     role = db.Column(db.String(10), nullable=False, default="editor")
     added_by = db.Column(db.String(120), default="")
     added_at = db.Column(db.DateTime, default=now)
+
+
+class Deleted(db.Model):
+    """The bin: a copy of each deleted doctrine or fit (JSON), so it can be restored."""
+    id = db.Column(db.Integer, primary_key=True)
+    kind = db.Column(db.String(10), nullable=False)  # "doctrine" or "fit"
+    name = db.Column(db.String(200), nullable=False)
+    doctrine_id = db.Column(db.Integer)  # the doctrine it belonged to / was
+    doctrine_name = db.Column(db.String(120), default="")
+    data = db.Column(db.Text, nullable=False)
+    deleted_by = db.Column(db.String(120), default="")
+    deleted_at = db.Column(db.DateTime, default=now)

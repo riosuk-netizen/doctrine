@@ -27,6 +27,7 @@ Live at https://doctrine-li9g.onrender.com/
   * **Owners** can edit, and can open the **Access** page (top bar) to add or remove owners and editors by exact character name. The first owner is set in Render with `OWNER_CHARACTERS`.
   * **Editors** can add, edit and delete doctrines and fits.
   * Anyone else who logs in can browse, push fits and check their skills, but sees no edit buttons. The top bar shows each person's role next to their name.
+* **Deleted (bin icon):** anything deleted, a whole doctrine or a single fit, goes to the bin with who deleted it and when. Right after deleting, the message has an **Undo** button. On the Deleted page editors and owners can **Restore** it exactly as it was, at the same link. Only owners can **Delete for good**. A fit whose doctrine was also deleted needs the doctrine restored first.
 * Then use **+ New doctrine** or **Edit / add fits**. The author box starts filled with your character name.
 * Paste one or more EFT fits; each starts with its `[Ship, Fit name]` line. A role in brackets at the end of the fit name, like `(Logi)`, becomes a role tag.
 * Doctrines have an **Author** (exact in-game character name, which shows their portrait linked to zKillboard) and show **Updated x ago**, which changes whenever anything in the doctrine changes.
@@ -48,13 +49,13 @@ Live at https://doctrine-li9g.onrender.com/
 | File | What it does |
 |---|---|
 | `app.py` | Routes, editor login, template helpers (`asset()` cache-busting, date and tag filters), startup column migrations |
-| `models.py` | Database tables: Doctrine, Fit, Access (owners and editors), TypeInfo, TypeReqs, SkillInfo, KV |
+| `models.py` | Database tables: Doctrine, Fit, Access (owners and editors), Deleted (the bin), TypeInfo, TypeReqs, SkillInfo, KV |
 | `eft.py` | EFT parsing, slot layout, XML export |
 | `esi.py` | Name to type ID lookup, character lookup |
 | `skills.py` | Required skills, prerequisites, alpha caps, skill plan text |
 | `sso.py` | EVE login (SSO) and saving fits to a character's fittings through ESI |
 | `markup.py` | Discord-style formatting to safe HTML |
-| `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, access |
+| `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, access, deleted |
 | `static/` | `style.css`, `app.js`, logo (gif and png), share banner `og-banner.png` |
 
 ## Hosting (Render + Neon)

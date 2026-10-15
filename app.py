@@ -17,7 +17,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from sqlalchemy import inspect, text
 
-from models import Access, Doctrine, Fit, db, now
+from models import Access, Deleted, Doctrine, Fit, db, now
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # Render sits behind a proxy: keep links https
@@ -92,6 +92,7 @@ def ago(dt):
 
 
 app.jinja_env.filters["ukdate"] = ukdate
+app.jinja_env.filters["fromjson"] = json.loads
 app.jinja_env.filters["ago"] = ago
 META_NAMES = {2: "Tech II", 3: "Storyline", 4: "Faction", 5: "Officer", 6: "Deadspace", 14: "Tech III"}
 app.jinja_env.globals["META_NAMES"] = META_NAMES
@@ -333,10 +334,107 @@ def doctrine_edit(did):
 @admin_required
 def doctrine_delete(did):
     d = db.get_or_404(Doctrine, did)
+    item = _to_bin("doctrine", d.name, d.id, d.name, _doctrine_data(d))
     db.session.delete(d)
     db.session.commit()
-    flash(f"Deleted {d.name}.", "ok")
+    _undo_flash(f"Deleted {d.name}.", item)
     return redirect(url_for("index"))
+
+
+# ---------- the bin: deleted doctrines and fits can be restored ----------
+
+def _iso(dt):
+    return dt.isoformat() if dt else None
+
+
+def _from_iso(s):
+    try:
+        return datetime.fromisoformat(s) if s else None
+    except ValueError:
+        return None
+
+
+def _fit_data(f):
+    return {"id": f.id, "name": f.name, "ship": f.ship, "role": f.role, "notes": f.notes, "eft": f.eft,
+            "position": f.position, "fitting_skills": f.fitting_skills or ""}
+
+
+def _doctrine_data(d):
+    return {"id": d.id, "name": d.name, "description": d.description, "author": d.author, "author_id": d.author_id,
+            "created_at": _iso(d.created_at), "updated_at": _iso(d.updated_at), "fits": [_fit_data(f) for f in d.fits]}
+
+
+def _to_bin(kind, name, did, dname, data):
+    item = Deleted(kind=kind, name=name[:200], doctrine_id=did, doctrine_name=(dname or "")[:120],
+                   data=json.dumps(data), deleted_by=session.get("sso_char_name", ""))
+    db.session.add(item)
+    return item
+
+
+def _undo_flash(text, item):
+    db.session.flush()
+    flash(json.dumps({"text": text, "id": item.id}), "undo")
+
+
+def _make_fit(fd, doctrine_id):
+    keep_id = fd.get("id") if fd.get("id") and not db.session.get(Fit, fd["id"]) else None
+    return Fit(id=keep_id, doctrine_id=doctrine_id, name=fd["name"], ship=fd["ship"], role=fd.get("role") or "",
+               notes=fd.get("notes") or "", eft=fd["eft"], position=fd.get("position") or 0,
+               fitting_skills=fd.get("fitting_skills") or "")
+
+
+@app.route("/deleted")
+@admin_required
+def deleted():
+    items = Deleted.query.order_by(Deleted.deleted_at.desc()).all()
+    fit_counts = {i.id: len(json.loads(i.data).get("fits", [])) for i in items if i.kind == "doctrine"}
+    live = {d.id for d in Doctrine.query.with_entities(Doctrine.id)}
+    return render_template("deleted.html", items=items, fit_counts=fit_counts, live=live)
+
+
+@app.post("/deleted/<int:bid>/restore")
+@admin_required
+def deleted_restore(bid):
+    item = db.get_or_404(Deleted, bid)
+    data = json.loads(item.data)
+    if item.kind == "doctrine":
+        keep_id = data.get("id") if data.get("id") and not db.session.get(Doctrine, data["id"]) else None
+        d = Doctrine(id=keep_id, name=data["name"], description=data.get("description") or "",
+                     author=data.get("author") or "", author_id=data.get("author_id"),
+                     created_at=_from_iso(data.get("created_at")) or now())
+        db.session.add(d)
+        db.session.flush()
+        for fd in data.get("fits", []):
+            db.session.add(_make_fit(fd, d.id))
+        d.updated_at = now()
+        db.session.delete(item)
+        db.session.commit()
+        flash(f"Restored {d.name}.", "ok")
+        return redirect(url_for("doctrine", did=d.id))
+    d = db.session.get(Doctrine, item.doctrine_id) if item.doctrine_id else None
+    if not d:
+        flash(f"{item.doctrine_name or 'The doctrine this fit was in'} has been deleted. Restore it first, then restore this fit.", "warn")
+        return redirect(url_for("deleted"))
+    f = _make_fit(data, d.id)
+    db.session.add(f)
+    fits = sorted(d.fits + ([f] if f not in d.fits else []), key=lambda x: (x.position or 0, x is f))
+    for pos, x in enumerate(fits):
+        x.position = pos
+    d.updated_at = now()
+    db.session.delete(item)
+    db.session.commit()
+    flash(f"Restored {f.name} to {d.name}.", "ok")
+    return redirect(url_for("doctrine", did=d.id) + f"#fit-{f.id}")
+
+
+@app.post("/deleted/<int:bid>/purge")
+@owner_required
+def deleted_purge(bid):
+    item = db.get_or_404(Deleted, bid)
+    db.session.delete(item)
+    db.session.commit()
+    flash(f"{item.name} deleted for good.", "ok")
+    return redirect(url_for("deleted"))
 
 
 def fitting_form(f, form=None):
@@ -413,10 +511,11 @@ def fit_move(fid, direction):
 def fit_delete(fid):
     f = db.get_or_404(Fit, fid)
     did = f.doctrine_id
+    item = _to_bin("fit", f.name, did, f.doctrine.name, _fit_data(f))
     f.doctrine.updated_at = now()
     db.session.delete(f)
     db.session.commit()
-    flash(f"Removed {f.name}.", "ok")
+    _undo_flash(f"Removed {f.name}.", item)
     return redirect(url_for("doctrine", did=did))
 
 

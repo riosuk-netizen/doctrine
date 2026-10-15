@@ -546,3 +546,20 @@ div.hull-render { border-radius: 12px; }
 .access-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .access-you { font-size: .8rem; }
 @media (max-width: 430px) { .topbar:has(nav .btn-primary) .brand > span { display: none; } }
+
+/* the bin */
+.flash-undo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.flash-undo .btn { padding: 5px 12px; color: inherit; border-color: currentColor; }
+.bin-list { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bin-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding: 14px 16px; }
+.bin-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.bin-name { font-size: 1.05rem; overflow-wrap: anywhere; }
+.bin-meta { font-size: .84rem; }
+.bin-warn { color: var(--accent-2); }
+.bin-kind { align-self: flex-start; padding: 0 7px; border-radius: 999px; font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.bin-kind.bin-doctrine { background: rgba(232,163,60,.16); color: var(--accent-2); }
+.bin-kind.bin-fit { background: rgba(61,143,217,.16); color: #9cc9f2; }
+.bin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.brand { white-space: nowrap; }
+@media (max-width: 1180px) { .topbar .btn-label-wide { display: none; } }
+@media (max-width: 900px) { .topbar:has(nav .btn-primary) .brand-sub { display: none; } }

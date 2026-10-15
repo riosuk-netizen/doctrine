@@ -56,7 +56,10 @@
       {% endif %}
       {% if is_owner %}<a class="btn btn-ghost" href="{{ url_for('access') }}" title="Choose who can edit" aria-label="Access">
         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.7.8 2.7 2.6 3 5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="btn-label">Access</span></a>{% endif %}
+        <span class="btn-label btn-label-wide">Access</span></a>{% endif %}
+      {% if is_admin %}<a class="btn btn-ghost" href="{{ url_for('deleted') }}" title="Deleted doctrines and fits" aria-label="Deleted">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="btn-label btn-label-wide">Deleted</span></a>{% endif %}
       {% if is_admin %}<a class="btn btn-primary" href="{{ url_for('doctrine_new') }}" title="New doctrine" aria-label="New doctrine">+<span class="btn-label"> New doctrine</span></a>{% endif %}
     </nav>
   </header>
@@ -67,7 +70,13 @@
 
   <main class="wrap">
     {% with msgs = get_flashed_messages(with_categories=true) %}
-      {% for cat, m in msgs %}<div class="flash flash-{{ cat }}">{{ m }}</div>{% endfor %}
+      {% for cat, m in msgs %}
+        {% if cat == 'undo' %}{% set u = m|fromjson %}
+          <div class="flash flash-ok flash-undo"><span>{{ u.text }}</span>
+            <form method="post" action="{{ url_for('deleted_restore', bid=u.id) }}"><button class="btn btn-ghost" type="submit">Undo</button></form>
+          </div>
+        {% else %}<div class="flash flash-{{ cat }}">{{ m }}</div>{% endif %}
+      {% endfor %}
     {% endwith %}
     {% if not_found %}
       <div class="empty-state"><h2>Lost in space</h2><p>That page doesn't exist.</p><a class="btn" href="{{ url_for('index') }}">Back to doctrines</a></div>

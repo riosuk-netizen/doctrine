@@ -2,7 +2,7 @@
 {% block title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
 {% block og_title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
 {% block og_desc %}{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}: {{ d.fits|map(attribute='ship')|unique|join(', ')|truncate(150) }}{% if d.description %}. {{ d.description|plain|truncate(140) }}{% endif %}{% endblock %}
-{% macro mine(sk) %}{% if sk.state %}<span class="you {{ sk.state }}" title="{% if sk.state == 'clone' %}Trained to {{ sk.have }}, but your alpha clone limits it to {{ sk.active }}{% elif sk.state == 'short' %}You have {{ sk.have }}, this fit needs {{ sk.level }}{% else %}You have {{ sk.active }}{% endif %}">{% if sk.state == 'ok' %}&#10003; {{ sk.active }}{% elif sk.state == 'clone' %}{{ sk.have }} &middot; alpha {{ sk.active }}{% elif sk.have %}You: {{ sk.have }}{% else %}Not trained{% endif %}</span>{% endif %}{% endmacro %}
+{% macro mine(sk) %}{% if sk.state %}<span class="you {{ sk.state }}" title="{% if sk.state == 'clone' %}You've trained this to {{ sk.have }}, but an alpha clone can only use up to {{ sk.active }}. This fit needs {{ sk.level }}.{% elif sk.state == 'short' %}You have {{ sk.have }}, this fit needs {{ sk.level }}{% else %}You have {{ sk.active }}, this fit needs {{ sk.level }}{% endif %}">{% if sk.state == 'ok' %}&#10003; Trained{% elif sk.state == 'clone' %}Needs Omega{% elif sk.have %}Have {{ sk.have }}, need {{ sk.level }}{% else %}Not trained, need {{ sk.level }}{% endif %}</span>{% endif %}{% endmacro %}
 {% block content %}
 <section class="doc-head">
   <div>
@@ -124,7 +124,10 @@
       <div class="tab-panel" id="skills-{{ f.id }}" role="tabpanel" hidden>
         {% if S and S.count %}
           <div class="skill-head">
-            <p class="skill-note">These are the <strong>bare minimum</strong> skills to fly this fit, including prerequisites. Extra levels will make it perform better.</p>
+            <div class="skill-intro">
+              <p class="skill-note">These are the <strong>bare minimum</strong> skills to fly this fit, including prerequisites. Extra levels will make it perform better.</p>
+              {% if S.train_all %}<p class="skill-note train-line"><span class="train-icon" aria-hidden="true">&#9719;</span> Training time from a brand new character: <strong>about {{ S.train_all }}</strong> <span class="muted">(Omega, average attributes, no implants)</span></p>{% endif %}
+            </div>
             <div class="skill-btns">
               {% if S.me and S.me.plan %}<button class="btn btn-eve copy-btn" type="button" data-copy="myplan-{{ f.id }}" data-toast="Your missing skills copied. In EVE: Skills window > Skill Plans > Import from Clipboard">Copy what I'm missing</button>{% endif %}
               <button class="btn copy-btn" type="button" data-copy="plan-{{ f.id }}" data-toast="Skill plan copied. In EVE: Skills window > Skill Plans > Import from Clipboard">Copy as skill plan</button>
@@ -133,7 +136,7 @@
           {% if S.me %}{% set me = S.me %}
             <p class="me-summary {{ 'ready' if me.ready else 'short' if me.short else 'clone' }}">
               {% if me.ready %}{{ pilot.name }} has every skill for this fit{% if S.fitting %}, including the fitting skills{% endif %}.
-              {% elif me.short %}{{ pilot.name }} is missing {{ me.short }} skill{{ 's' if me.short != 1 }} for this fit{% if me.clone %}, and {{ me.clone }} more {{ 'is' if me.clone == 1 else 'are' }} trained but held back by an alpha clone{% endif %}. Copy what you're missing to get a skill plan with just those.
+              {% elif me.short %}{{ pilot.name }} is missing {{ me.short }} skill{{ 's' if me.short != 1 }} for this fit{% if me.clone %}, and {{ me.clone }} more {{ 'is' if me.clone == 1 else 'are' }} trained but held back by an alpha clone{% endif %}.{% if me.train %} <strong class="train-time">About {{ me.train }} of training</strong> {% if me.own_attrs %}with your attributes{% else %}with average attributes{% endif %}{% if me.alpha %}, at alpha speed (half of Omega){% endif %}.{% endif %} Copy what you're missing to get a skill plan with just those.
               {% else %}{{ pilot.name }} has trained everything, but {{ me.clone }} skill{{ 's are' if me.clone != 1 else ' is' }} held back by an alpha clone. Omega is needed to fly this fit.{% endif %}
             </p>
             {% if me.plan %}<textarea id="myplan-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ me.plan }}</textarea>{% endif %}
@@ -143,7 +146,7 @@
               <div class="skill-group">
                 <h4>{{ g.name }}</h4>
                 {% for sk in g.skills %}
-                  <div class="skill-row{% if sk.omega %} is-omega{% endif %}{% if sk.state %} me-{{ sk.state }}{% endif %}">
+                  <div class="skill-row{% if sk.state %} me-{{ sk.state }}{% elif sk.omega %} is-omega{% endif %}">
                     <span class="skill-name">{{ sk.name }}</span>{{ mine(sk) }}
                     <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
                       {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
@@ -159,7 +162,7 @@
               <div class="skill-groups">
                 <div class="skill-group">
                   {% for sk in S.fitting %}
-                    <div class="skill-row{% if sk.omega %} is-omega{% endif %}{% if sk.state %} me-{{ sk.state }}{% endif %}">
+                    <div class="skill-row{% if sk.state %} me-{{ sk.state }}{% elif sk.omega %} is-omega{% endif %}">
                       <span class="skill-name">{{ sk.name }}</span>{{ mine(sk) }}
                       <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
                         {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
@@ -175,8 +178,11 @@
           <div class="legend">
             <span><i class="pip"></i> Not required</span>
             <span><i class="pip on"></i> Required</span>
-            {% if S.caps_known %}<span><i class="pip omega"></i> Requires Omega</span>{% else %}<span class="muted">Alpha limits unavailable right now</span>{% endif %}
-            {% if S.me %}<span><span class="you ok">&#10003;</span> You have it</span><span><span class="you short">You: 2</span> Your level, lower than the fit needs</span><span><span class="you clone">4 &middot; alpha 3</span> Trained to 4, but an alpha clone can only use 3</span>{% endif %}
+            {% if S.caps_known %}<span><i class="pip omega"></i> Level needs Omega</span>{% else %}<span class="muted">Alpha limits unavailable right now</span>{% endif %}
+            {% if S.me %}</div><div class="legend legend-me">
+            <span><span class="you ok">&#10003; Trained</span> you have this at the level needed</span>
+            <span><span class="you short">Have 2, need 3</span> train it higher</span>
+            <span><span class="you clone">Needs Omega</span> trained, but an alpha clone can't use that level</span>{% endif %}
           </div>
           <textarea id="plan-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ S.plan }}</textarea>
         {% else %}

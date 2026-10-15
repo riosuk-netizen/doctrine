@@ -96,8 +96,12 @@ def can_read_skills(sess):
     return SKILLS_SCOPE in (sess.get("sso_scopes") or [])
 
 
-def pilot_skills(sess):
-    """{skill_id: (trained level, active level)} for the logged-in pilot, or None if not available.
+ATTR_NAMES = ("charisma", "intelligence", "memory", "perception", "willpower")
+
+
+def pilot_data(sess):
+    """The logged-in pilot's skills and attributes, or None if not available:
+    {"skills": {skill_id: (trained level, active level, skill points)}, "attrs": {"memory": 20, ...} or None}.
     Active is lower than trained when an alpha clone is holding a skill back."""
     if not sess.get("sso_char_id") or not can_read_skills(sess):
         return None
@@ -107,22 +111,31 @@ def pilot_skills(sess):
         return hit[1]
     try:
         token = _access_token(sess)
-        r = http.get(f"{ESI}/characters/{cid}/skills/", params={"datasource": "tranquility"},
-                     timeout=15, headers={"Authorization": f"Bearer {token}"})
+        auth = {"Authorization": f"Bearer {token}"}
+        r = http.get(f"{ESI}/characters/{cid}/skills/", params={"datasource": "tranquility"}, timeout=15, headers=auth)
         if r.status_code in (401, 403):
             sess["sso_scopes"] = [s for s in sess.get("sso_scopes", []) if s != SKILLS_SCOPE]
             return None
         r.raise_for_status()
+        attrs = None
+        try:
+            ra = http.get(f"{ESI}/characters/{cid}/attributes/", params={"datasource": "tranquility"}, timeout=15, headers=auth)
+            if ra.ok:
+                attrs = {k: int(ra.json().get(k, 0)) for k in ATTR_NAMES}
+        except Exception:
+            pass
     except NotLoggedIn:
         return None
     except Exception:
         return hit[1] if hit else None
-    skills = {s["skill_id"]: (int(s.get("trained_skill_level", 0)), int(s.get("active_skill_level", 0)))
+    skills = {s["skill_id"]: (int(s.get("trained_skill_level", 0)), int(s.get("active_skill_level", 0)),
+                              int(s.get("skillpoints_in_skill", 0)))
               for s in r.json().get("skills", [])}
+    data = {"skills": skills, "attrs": attrs if attrs and all(attrs.values()) else None}
     if len(_skill_cache) > 500:
         _skill_cache.clear()
-    _skill_cache[cid] = (time.time(), skills)
-    return skills
+    _skill_cache[cid] = (time.time(), data)
+    return data
 
 
 def _access_token(sess):

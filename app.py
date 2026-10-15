@@ -214,7 +214,8 @@ def index():
     search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "",
                          "desc": markup.plain(d.description or "")[:300], "fits": len(d.fits)} for d in doctrines]
     ready = {}
-    have = sso.pilot_skills(session) if all_fits else None
+    pd = sso.pilot_data(session) if all_fits else None
+    have = pd["skills"] if pd else None
     if have is not None:
         views = skills.fit_skills(layouts_for(all_fits), {f.id: f.fitting_levels() for f in all_fits}, have)
         for d in doctrines:
@@ -229,8 +230,10 @@ def doctrine(did):
     layouts = layouts_for(d.fits)
     ship_meta = skills.meta_groups({L["ship_id"] for L in layouts.values()})
     fitting = {f.id: f.fitting_levels() for f in d.fits}
-    have = sso.pilot_skills(session)
-    return render_template("doctrine.html", d=d, layouts=layouts, skill_views=skills.fit_skills(layouts, fitting, have),
+    pd = sso.pilot_data(session)
+    have = pd["skills"] if pd else None
+    return render_template("doctrine.html", d=d, layouts=layouts,
+                           skill_views=skills.fit_skills(layouts, fitting, have, pd["attrs"] if pd else None),
                            ship_meta=ship_meta, have_skills=have is not None)
 
 

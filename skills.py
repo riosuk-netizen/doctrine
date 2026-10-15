@@ -242,6 +242,66 @@ def _expand(direct, infos):
     return need
 
 
+# training time: skill points per level (times the skill's rank) and EVE's attribute IDs
+LEVEL_SP = (0, 250, 1415, 8000, 45255, 256000)
+ATTR_IDS = {164: "charisma", 165: "intelligence", 166: "memory", 167: "perception", 168: "willpower"}
+AVERAGE_SP_MIN = 30  # attributes of about 20 / 20 with no implants, used when nobody is logged in
+
+
+def train_infos(skill_ids):
+    """{skill_id: (rank, primary attribute, secondary attribute)}, cached in the database."""
+    ids = {int(s) for s in skill_ids if s}
+    row = db.session.get(KV, "skill_train")
+    known = {int(k): tuple(v) for k, v in json.loads(row.value).items()} if row else {}
+    missing = ids - known.keys()
+    if missing:
+        added = {}
+        for sid, d in _fetch_many(_get_type, missing).items():
+            attrs = {a["attribute_id"]: a["value"] for a in d.get("dogma_attributes") or []}
+            if 275 in attrs:
+                added[sid] = (int(attrs[275]), ATTR_IDS.get(int(attrs.get(180, 0)), ""), ATTR_IDS.get(int(attrs.get(181, 0)), ""))
+        if added:
+            known.update(added)
+            db.session.merge(KV(key="skill_train", value=json.dumps({str(k): list(v) for k, v in known.items()})))
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+    return {s: known[s] for s in ids if s in known}
+
+
+def training_minutes(targets, tinfo, have=None, attrs=None, alpha=False):
+    """Minutes to train every skill in targets {skill_id: level} from where the pilot is now.
+    have: {skill_id: (trained, active, sp)}; attrs: pilot attributes. Returns None if data is missing."""
+    total = 0.0
+    for sid, lvl in targets.items():
+        if sid not in tinfo:
+            return None
+        rank, prim, sec = tinfo[sid]
+        current = have.get(sid, (0, 0, 0)) if have else (0, 0, 0)
+        sp_needed = LEVEL_SP[lvl] * rank - max(current[2], LEVEL_SP[current[0]] * rank)
+        if sp_needed <= 0:
+            continue
+        rate = (attrs.get(prim, 0) + attrs.get(sec, 0) / 2) if attrs else AVERAGE_SP_MIN
+        rate = rate or AVERAGE_SP_MIN
+        total += sp_needed / (rate / 2 if alpha else rate)
+    return total
+
+
+def nice_time(minutes):
+    """'3d 4h', '5h 20m', '12m'."""
+    if minutes is None:
+        return ""
+    m = int(round(minutes))
+    d, rem = divmod(m, 1440)
+    h, mins = divmod(rem, 60)
+    if d:
+        return f"{d}d {h}h" if h else f"{d}d"
+    if h:
+        return f"{h}h {mins}m" if mins else f"{h}h"
+    return f"{max(mins, 1)}m"
+
+
 def _plan_lines(need, infos, start=None):
     """Skill plan text: one line per level, prerequisites first.
     start: levels already trained, which are left out of the plan."""
@@ -264,7 +324,7 @@ def _plan_lines(need, infos, start=None):
     return lines
 
 
-def fit_skills(layouts, fitting=None, have=None):
+def fit_skills(layouts, fitting=None, have=None, attrs=None):
     """Build the Required skills view for each fit.
     layouts: {fit_id: layout}; fitting: {fit_id: {skill_id: level}} fitting skills set by editors;
     have: the logged-in pilot's skills {skill_id: (trained, active)}, to check whether they can fly each fit."""
@@ -291,6 +351,8 @@ def fit_skills(layouts, fitting=None, have=None):
 
     infos = skill_infos(set(direct_all) | {sid for lv in fitting.values() for sid in lv})
     caps = alpha_caps()
+    tinfo = train_infos(set(infos))
+    alpha = bool(have) and any(v[1] < v[0] for v in have.values())
 
     views = {}
     for fid, direct in per_fit_direct.items():
@@ -335,8 +397,14 @@ def fit_skills(layouts, fitting=None, have=None):
         else:
             views[fid]["fitting"] = []
             full = need
+        views[fid]["train_all"] = nice_time(training_minutes(full, tinfo))
         if have is not None:
             _check_pilot(views[fid], full, have, infos)
+            short = {s: l for s, l in full.items() if have.get(s, (0, 0, 0))[0] < l}
+            if short:
+                views[fid]["me"]["train"] = nice_time(training_minutes(short, tinfo, have, attrs, alpha))
+                views[fid]["me"]["alpha"] = alpha
+                views[fid]["me"]["own_attrs"] = attrs is not None
     return views
 
 
@@ -344,17 +412,17 @@ def _check_pilot(view, full, have, infos):
     """Mark each skill row with the pilot's level, and sum up whether they can fly the fit."""
     rows = [sk for g in view["groups"] for sk in g["skills"]] + view.get("fitting", [])
     for sk in rows:
-        trained, active = have.get(sk["id"], (0, 0))
+        trained, active = have.get(sk["id"], (0, 0, 0))[:2]
         sk["have"], sk["active"] = trained, active
         need = sk["level"]
         sk["state"] = "ok" if active >= need else "clone" if trained >= need else "short"
     states = {}
     for sid, lvl in full.items():
-        trained, active = have.get(sid, (0, 0))
+        trained, active = have.get(sid, (0, 0, 0))[:2]
         st = "ok" if active >= lvl else "clone" if trained >= lvl else "short"
         states[sid] = st
     short = {sid: lvl for sid, lvl in full.items() if states[sid] == "short"}
-    trained = {sid: t for sid, (t, _) in have.items()}
+    trained = {sid: v[0] for sid, v in have.items()}
     view["me"] = {
         "ready": not short and "clone" not in states.values(),
         "short": len(short),

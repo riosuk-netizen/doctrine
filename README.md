@@ -17,6 +17,7 @@ Live at https://doctrine-li9g.onrender.com/
 * Each fit has three tabs: **Fit**, **Required skills** and **Module list**.
 * **Required skills** lists every skill needed including prerequisites, with five level pips per skill. Levels an alpha clone can't train are gold, and each fit gets an **Alpha OK** or **Omega** badge. **Copy as skill plan** copies the plan for EVE's skill planner.
 * **Fitting skills:** the minimum skills cover using each module, not fitting them all at once. When editing a fit, editors click levels for the seven skills that change CPU and power grid (CPU Management, Power Grid Management, Weapon Upgrades, Advanced Weapon Upgrades, Shield Upgrades, Energy Grid Upgrades, Electronics Upgrades). These show in their own **Fitting skills** section under the minimum skills, and are included in the skill plan and the Alpha/Omega badge. Boxes above the alpha limit have a gold outline.
+* **Training time:** the Required skills tab shows roughly how long the whole fit takes to train from a brand new character (Omega, average attributes, no implants). Logged-in pilots also see how long their missing skills will take with their own attributes, at half speed if they're on an alpha clone. Skill ranks and attributes come from ESI and are cached in the database.
 * Fits can have several role tags, separated by commas (e.g. `EWAR, DPS`).
 
 **For editors**

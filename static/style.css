@@ -485,6 +485,8 @@ div.hull-render { border-radius: 12px; }
 .you.short { color: #f29a9a; background: rgba(224,82,82,.12); }
 .you.clone { color: var(--accent-2); background: rgba(232,163,60,.12); }
 .skill-row.me-short .skill-name { color: #f2b3b3; }
+.skill-row.me-clone .skill-name { color: var(--accent-2); }
+.legend-me { margin-top: 6px; padding-top: 0; border-top: 0; }
 .skill-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .me-summary { margin: 0 0 12px; padding: 8px 12px; border-radius: 8px; font-size: .88rem; border: 1px solid; }
 .me-summary.ready { color: #a9e8c0; background: rgba(79,191,122,.08); border-color: rgba(79,191,122,.3); }
@@ -497,3 +499,6 @@ div.hull-render { border-radius: 12px; }
 .flash-info { background: #0e1f2e; border-color: #2c5878; color: #cfe8ff; }
 .flash-info a { color: inherit; font-weight: 600; }
 @media (max-width: 720px) { .skill-btns { width: 100%; } }
+.skill-intro { display: flex; flex-direction: column; gap: 4px; }
+.train-line strong, .train-time { color: var(--text); }
+.train-icon { color: var(--accent); margin-right: 2px; }

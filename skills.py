@@ -5,6 +5,7 @@ skill, for prerequisites). Alpha clone caps come from the game's clone grade
 data, published at Hoboleaks. Everything is cached in the database.
 """
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
@@ -248,10 +249,17 @@ ATTR_IDS = {164: "charisma", 165: "intelligence", 166: "memory", 167: "perceptio
 AVERAGE_SP_MIN = 30  # attributes of about 20 / 20 with no implants, used when nobody is logged in
 
 
+def _clean_desc(text):
+    """In-game descriptions contain EVE markup like <a href=showinfo:...>; keep the words only."""
+    text = re.sub(r"<br\s*/?>", "\n", text or "", flags=re.I)
+    text = re.sub(r"<[^>]+>", "", text)
+    return re.sub(r"[ \t]+", " ", text).strip()
+
+
 def train_infos(skill_ids):
-    """{skill_id: (rank, primary attribute, secondary attribute)}, cached in the database."""
+    """{skill_id: (rank, primary attribute, secondary attribute, in-game description)}, cached in the database."""
     ids = {int(s) for s in skill_ids if s}
-    row = db.session.get(KV, "skill_train")
+    row = db.session.get(KV, "skill_train_v2")
     known = {int(k): tuple(v) for k, v in json.loads(row.value).items()} if row else {}
     missing = ids - known.keys()
     if missing:
@@ -259,10 +267,11 @@ def train_infos(skill_ids):
         for sid, d in _fetch_many(_get_type, missing).items():
             attrs = {a["attribute_id"]: a["value"] for a in d.get("dogma_attributes") or []}
             if 275 in attrs:
-                added[sid] = (int(attrs[275]), ATTR_IDS.get(int(attrs.get(180, 0)), ""), ATTR_IDS.get(int(attrs.get(181, 0)), ""))
+                added[sid] = (int(attrs[275]), ATTR_IDS.get(int(attrs.get(180, 0)), ""),
+                              ATTR_IDS.get(int(attrs.get(181, 0)), ""), _clean_desc(d.get("description", ""))[:1200])
         if added:
             known.update(added)
-            db.session.merge(KV(key="skill_train", value=json.dumps({str(k): list(v) for k, v in known.items()})))
+            db.session.merge(KV(key="skill_train_v2", value=json.dumps({str(k): list(v) for k, v in known.items()})))
             try:
                 db.session.commit()
             except Exception:
@@ -277,7 +286,7 @@ def training_minutes(targets, tinfo, have=None, attrs=None, alpha=False):
     for sid, lvl in targets.items():
         if sid not in tinfo:
             return None
-        rank, prim, sec = tinfo[sid]
+        rank, prim, sec = tinfo[sid][:3]
         current = have.get(sid, (0, 0, 0)) if have else (0, 0, 0)
         sp_needed = LEVEL_SP[lvl] * rank - max(current[2], LEVEL_SP[current[0]] * rank)
         if sp_needed <= 0:
@@ -398,6 +407,11 @@ def fit_skills(layouts, fitting=None, have=None, attrs=None):
             views[fid]["fitting"] = []
             full = need
         views[fid]["train_all"] = nice_time(training_minutes(full, tinfo))
+        for sk in [sk for g in views[fid]["groups"] for sk in g["skills"]] + views[fid].get("fitting", []):
+            t = tinfo.get(sk["id"])
+            if t:
+                sk["rank"], sk["desc"] = t[0], t[3]
+                sk["attrs"] = " / ".join(a.capitalize() for a in t[1:3] if a)
         if have is not None:
             _check_pilot(views[fid], full, have, infos)
             short = {s: l for s, l in full.items() if have.get(s, (0, 0, 0))[0] < l}

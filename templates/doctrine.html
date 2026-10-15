@@ -2,6 +2,7 @@
 {% block title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
 {% block og_title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
 {% block og_desc %}{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}: {{ d.fits|map(attribute='ship')|unique|join(', ')|truncate(150) }}{% if d.description %}. {{ d.description|plain|truncate(140) }}{% endif %}{% endblock %}
+{% macro sname(sk) %}<span class="skill-name{% if sk.desc %} has-tip{% endif %}"{% if sk.desc %} tabindex="0"{% endif %}>{{ sk.name }}{% if sk.desc %}<span class="skill-tip" role="tooltip"><strong>{{ sk.name }}</strong><span class="tip-meta">Rank {{ sk.rank }}{% if sk.attrs %} &middot; {{ sk.attrs }}{% endif %}</span>{{ sk.desc }}</span>{% endif %}</span>{% endmacro %}
 {% macro mine(sk) %}{% if sk.state %}<span class="you {{ sk.state }}" title="{% if sk.state == 'clone' %}You've trained this to {{ sk.have }}, but an alpha clone can only use up to {{ sk.active }}. This fit needs {{ sk.level }}.{% elif sk.state == 'short' %}You have {{ sk.have }}, this fit needs {{ sk.level }}{% else %}You have {{ sk.active }}, this fit needs {{ sk.level }}{% endif %}">{% if sk.state == 'ok' %}&#10003; Trained{% elif sk.state == 'clone' %}Needs Omega{% elif sk.have %}Have {{ sk.have }}, need {{ sk.level }}{% else %}Not trained, need {{ sk.level }}{% endif %}</span>{% endif %}{% endmacro %}
 {% block content %}
 <section class="doc-head">
@@ -147,7 +148,7 @@
                 <h4>{{ g.name }}</h4>
                 {% for sk in g.skills %}
                   <div class="skill-row{% if sk.state %} me-{{ sk.state }}{% elif sk.omega %} is-omega{% endif %}">
-                    <span class="skill-name">{{ sk.name }}</span>{{ mine(sk) }}
+                    {{ sname(sk) }}{{ mine(sk) }}
                     <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
                       {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
                     </span>
@@ -163,7 +164,7 @@
                 <div class="skill-group">
                   {% for sk in S.fitting %}
                     <div class="skill-row{% if sk.state %} me-{{ sk.state }}{% elif sk.omega %} is-omega{% endif %}">
-                      <span class="skill-name">{{ sk.name }}</span>{{ mine(sk) }}
+                      {{ sname(sk) }}{{ mine(sk) }}
                       <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
                         {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
                       </span>

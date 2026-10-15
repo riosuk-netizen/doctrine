@@ -225,6 +225,13 @@
     }
   });
 
+  // Skill descriptions: tap a skill name on touch screens to open or close it
+  document.addEventListener("click", (e) => {
+    const name = e.target.closest(".skill-name.has-tip");
+    document.querySelectorAll(".skill-name.show").forEach((n) => { if (n !== name) n.classList.remove("show"); });
+    if (name && window.matchMedia("(hover: none)").matches) name.classList.toggle("show");
+  });
+
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {
     const tile = e.target.closest(".tile[data-name]");

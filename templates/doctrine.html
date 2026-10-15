@@ -176,7 +176,7 @@
             <span><i class="pip"></i> Not required</span>
             <span><i class="pip on"></i> Required</span>
             {% if S.caps_known %}<span><i class="pip omega"></i> Requires Omega</span>{% else %}<span class="muted">Alpha limits unavailable right now</span>{% endif %}
-            {% if S.me %}<span><span class="you ok">&#10003;</span> You have it</span><span><span class="you short">You: 2</span> You're short</span><span><span class="you clone">4 &middot; alpha 3</span> Held back by alpha clone</span>{% endif %}
+            {% if S.me %}<span><span class="you ok">&#10003;</span> You have it</span><span><span class="you short">You: 2</span> Your level, lower than the fit needs</span><span><span class="you clone">4 &middot; alpha 3</span> Trained to 4, but an alpha clone can only use 3</span>{% endif %}
           </div>
           <textarea id="plan-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ S.plan }}</textarea>
         {% else %}

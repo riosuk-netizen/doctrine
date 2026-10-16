@@ -118,7 +118,7 @@ form { margin: 0; }
 .back:hover { color: var(--text); }
 .doc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
 .doc-head .desc { max-width: 70ch; white-space: pre-line; }
-.doc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.doc-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
 .fit-jump { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; scrollbar-width: thin; }
 .fit-jump a {
@@ -563,3 +563,42 @@ div.hull-render { border-radius: 12px; }
 .brand { white-space: nowrap; }
 @media (max-width: 1180px) { .topbar .btn-label-wide { display: none; } }
 @media (max-width: 900px) { .topbar:has(nav .btn-primary) .brand-sub { display: none; } }
+
+/* who can see a doctrine */
+.lock { width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; flex: none; }
+.vis-controls { display: flex; flex-direction: column; gap: 10px; }
+.vis-switch { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: .9rem; }
+.vis-opt { color: var(--muted); transition: color .15s; display: inline-flex; align-items: center; }
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; flex: none; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.slider { position: absolute; inset: 0; border-radius: 999px; background: #1f2a3a; border: 1px solid #33445c; transition: background .2s, border-color .2s; }
+.slider::before { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #d9e2ee; box-shadow: 0 1px 4px rgba(0,0,0,.5); transition: transform .2s; }
+.switch input:checked + .slider { background: rgba(232,163,60,.35); border-color: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(20px); background: var(--accent); }
+.switch input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(232,163,60,.3); }
+.vis-switch:has(input:not(:checked)) .vis-public { color: var(--text); }
+.vis-switch:has(input:checked) .vis-alliance { color: var(--accent-2); }
+label.check { flex-direction: row; align-items: flex-start; gap: 8px; font-weight: 400; cursor: pointer; }
+label.check input { width: auto; margin-top: 3px; accent-color: var(--accent); }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field-label { font-weight: 600; font-size: .9rem; display: flex; flex-direction: column; gap: 4px; }
+.vis-form { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.vis-form .vis-controls { gap: 6px; }
+.vis-form label.check .hint { display: none; }
+.vis-badges { margin: 6px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.vis-badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: .74rem; font-weight: 700; letter-spacing: .03em; border: 1px solid; vertical-align: middle; font-family: "Inter", sans-serif; text-transform: none; }
+.vis-badge.sm { font-size: .66rem; padding: 1px 7px; }
+.vis-badge.alliance { color: var(--accent-2); background: rgba(232,163,60,.1); border-color: rgba(232,163,60,.4); }
+.vis-badge.private { color: #c9b6f2; background: rgba(150,110,230,.12); border-color: rgba(150,110,230,.45); }
+.members-hint { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+/* Copy to another doctrine */
+.copy-to { position: relative; }
+.copy-to > summary { list-style: none; cursor: pointer; }
+.copy-to > summary::-webkit-details-marker { display: none; }
+.copy-to[open] > summary { border-color: var(--accent); }
+.copy-pop { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: min(320px, 86vw); display: flex; flex-direction: column; gap: 10px;
+  padding: 14px; border-radius: 10px; background: #0b1018; border: 1px solid #2c3a4e; box-shadow: 0 12px 34px rgba(0,0,0,.6); }
+.copy-pop select { padding: 9px 10px; border-radius: 8px; background: var(--bg-2); color: var(--text); border: 1px solid var(--line); font: inherit; font-weight: 400; }
+.copy-pop .hint { margin: 0; font-size: .8rem; }
+.copy-new[hidden] { display: none; }

@@ -31,6 +31,9 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
 # owners named in Render (comma separated character names); more owners and editors are added on the Access page
 OWNER_LIST = [n.strip() for n in os.environ.get("OWNER_CHARACTERS", "").split(",") if n.strip()]
 OWNER_NAMES = {n.lower() for n in OWNER_LIST}
+# who counts as "us" for alliance-only doctrines: alliance or corporation names (or IDs), comma separated
+MEMBER_SPEC = [n.strip() for n in os.environ.get("ALLIANCE_MEMBERS", "").split(",") if n.strip()]
+MEMBER_LABEL = os.environ.get("ALLIANCE_LABEL", "").strip() or (MEMBER_SPEC[0] if MEMBER_SPEC and not MEMBER_SPEC[0].isdigit() else "Alliance")
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # sent on the EVE login return trip, not on other sites' form posts
 app.config["SESSION_COOKIE_SECURE"] = bool(os.environ.get("RENDER"))  # https only once live on Render
 
@@ -44,6 +47,8 @@ with app.app_context():
         ("type_reqs", "meta_group", "INTEGER"),
         ("type_reqs", "reqs_pending", "BOOLEAN DEFAULT FALSE"),
         ("fit", "fitting_skills", "TEXT DEFAULT ''"),
+        ("doctrine", "visibility", "VARCHAR(10) DEFAULT 'public'"),
+        ("doctrine", "is_private", "BOOLEAN DEFAULT FALSE"),
     )
     for _table, _name, _sql in _new_cols:
         if _name not in {c["name"] for c in inspect(db.engine).get_columns(_table)}:
@@ -129,6 +134,57 @@ def is_admin():
     return role() in ("owner", "editor")
 
 
+def member_ids():
+    """EVE IDs of the alliances / corporations in ALLIANCE_MEMBERS, looked up once and kept in the database."""
+    if not MEMBER_SPEC:
+        return set()
+    from models import KV
+    key = "members:" + ",".join(sorted(n.lower() for n in MEMBER_SPEC))
+    row = db.session.get(KV, "member_ids")
+    if row:
+        saved = json.loads(row.value)
+        if saved.get("key") == key and saved.get("ids"):
+            return set(saved["ids"])
+    ids = {int(n) for n in MEMBER_SPEC if n.isdigit()}
+    found = esi.groups([n for n in MEMBER_SPEC if not n.isdigit()])
+    ids |= set(found.values())
+    if ids:
+        db.session.merge(KV(key="member_ids", value=json.dumps({"key": key, "ids": sorted(ids)})))
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+    return ids
+
+
+def is_member():
+    """Logged in with a character in our alliance (or an owner / editor)."""
+    if "member" not in g:
+        ok = is_admin()
+        if not ok and sso.character(session):
+            aff = sso.affiliation(session)
+            ok = bool(aff) and bool({a for a in aff if a} & member_ids())
+        g.member = ok
+    return g.member
+
+
+def can_see(d):
+    if d.is_private:
+        return is_admin()
+    if (d.visibility or "public") == "alliance":
+        return is_member()
+    return True
+
+
+def visible_or_404(d):
+    """Stop here unless the viewer may see this doctrine. Private ones look like they don't exist."""
+    if d is None or (d.is_private and not is_admin()):
+        abort(404)
+    if not can_see(d):
+        abort(403)
+    return d
+
+
 def is_owner():
     return role() == "owner"
 
@@ -172,7 +228,8 @@ def inject():
     return {"asset": asset, "is_admin": is_admin(), "is_owner": is_owner(), "role": role(), "no_owner": no_owner, "icon": icon,
             "render_img": render_img, "ORDER": DISPLAY_ORDER, "LABELS": LABELS,
             "sso_on": sso.enabled(), "pilot": sso.character(session),
-            "pilot_skills_ok": sso.can_read_skills(session)}
+            "pilot_skills_ok": sso.can_read_skills(session), "member_label": MEMBER_LABEL,
+            "can_see": can_see}
 
 
 def layouts_for(fits):
@@ -222,7 +279,9 @@ def add_fits_from_text(doctrine, text):
 
 @app.route("/")
 def index():
-    doctrines = Doctrine.query.order_by(Doctrine.updated_at.desc()).all()
+    every = Doctrine.query.order_by(Doctrine.updated_at.desc()).all()
+    doctrines = [d for d in every if can_see(d)]
+    hidden_alliance = sum(1 for d in every if not d.is_private and (d.visibility or "public") == "alliance" and not can_see(d))
     all_fits = [f for d in doctrines for f in d.fits]
     info = esi.resolve({f.ship for f in all_fits})
     ship_ids = {f.id: (info.get(f.ship.lower()).type_id if info.get(f.ship.lower()) else None) for f in all_fits}
@@ -258,13 +317,14 @@ def index():
     search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "",
                          "desc": markup.plain(d.description or "")[:300], "fits": len(d.fits)} for d in doctrines]
     return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta, ready=ready,
+                           hidden_alliance=hidden_alliance,
                            search_data={"fits": search_fits, "doctrines": search_doctrines, "meta": META_NAMES,
                                         "skills_known": have is not None})
 
 
 @app.route("/doctrine/<int:did>")
 def doctrine(did):
-    d = db.get_or_404(Doctrine, did)
+    d = visible_or_404(db.session.get(Doctrine, did))
     layouts = layouts_for(d.fits)
     ship_meta = skills.meta_groups({L["ship_id"] for L in layouts.values()})
     fitting = {f.id: f.fitting_levels() for f in d.fits}
@@ -272,12 +332,13 @@ def doctrine(did):
     have = pd["skills"] if pd else None
     return render_template("doctrine.html", d=d, layouts=layouts,
                            skill_views=skills.fit_skills(layouts, fitting, have, pd["attrs"] if pd else None),
-                           ship_meta=ship_meta, have_skills=have is not None)
+                           ship_meta=ship_meta, have_skills=have is not None,
+                           all_doctrines=Doctrine.query.order_by(Doctrine.name).all() if is_admin() else [])
 
 
 @app.route("/doctrine/<int:did>/xml")
 def doctrine_export(did):
-    d = db.get_or_404(Doctrine, did)
+    d = visible_or_404(db.session.get(Doctrine, did))
     lays = layouts_for(d.fits)
     xml = doctrine_xml([(f, lays[f.id]) for f in d.fits], d.description)
     fname = re.sub(r"[^A-Za-z0-9_-]+", "_", d.name) or "doctrine"
@@ -295,6 +356,7 @@ def doctrine_new():
             return render_template("doctrine_form.html", d=None, form=request.form)
         d = Doctrine(name=name[:120], description=request.form.get("description", "").strip())
         set_author(d, request.form.get("author", ""))
+        _set_visibility(d, request.form)
         db.session.add(d)
         n, errors = add_fits_from_text(d, request.form.get("eft", ""))
         if n == 0:
@@ -307,7 +369,8 @@ def doctrine_new():
             flash(e, "warn")
         flash(f"Doctrine created with {n} fit{'s' if n != 1 else ''}.", "ok")
         return redirect(url_for("doctrine", did=d.id))
-    return render_template("doctrine_form.html", d=None, form={"author": session.get("sso_char_name", "")})
+    return render_template("doctrine_form.html", d=None, form={"author": session.get("sso_char_name", ""),
+                                                            "visibility": "alliance" if MEMBER_SPEC else "public"})
 
 
 @app.route("/doctrine/<int:did>/edit", methods=["GET", "POST"])
@@ -318,6 +381,7 @@ def doctrine_edit(did):
         d.name = request.form.get("name", d.name).strip()[:120] or d.name
         d.description = request.form.get("description", "").strip()
         set_author(d, request.form.get("author", ""))
+        _set_visibility(d, request.form)
         d.updated_at = now()
         n, errors = (0, [])
         if request.form.get("eft", "").strip():
@@ -327,7 +391,51 @@ def doctrine_edit(did):
             flash(e, "warn")
         flash("Doctrine updated" + (f", {n} fit{'s' if n != 1 else ''} added." if n else "."), "ok")
         return redirect(url_for("doctrine", did=d.id))
-    return render_template("doctrine_form.html", d=d, form={"name": d.name, "description": d.description, "author": d.author or ""})
+    return render_template("doctrine_form.html", d=d, form={"name": d.name, "description": d.description, "author": d.author or "",
+                                                         "visibility": d.visibility or "public", "is_private": d.is_private})
+
+
+def _set_visibility(d, form):
+    d.visibility = "alliance" if form.get("visibility") == "alliance" else "public"
+    d.is_private = form.get("is_private") in ("1", "on", "true")
+
+
+@app.post("/doctrine/<int:did>/visibility")
+@admin_required
+def doctrine_visibility(did):
+    d = db.get_or_404(Doctrine, did)
+    _set_visibility(d, request.form)
+    db.session.commit()
+    who = "only owners and editors" if d.is_private else (f"{MEMBER_LABEL} members only" if d.visibility == "alliance" else "everyone")
+    flash(f"{d.name} can now be seen by {who}.", "ok")
+    return redirect(url_for("doctrine", did=d.id))
+
+
+@app.post("/fit/<int:fid>/copy")
+@admin_required
+def fit_copy(fid):
+    f = db.get_or_404(Fit, fid)
+    target = request.form.get("target", "")
+    if target == "new":
+        name = request.form.get("new_name", "").strip()[:120] or f"{f.name} doctrine"
+        d = Doctrine(name=name, author=session.get("sso_char_name", ""), visibility=f.doctrine.visibility or "public",
+                     is_private=True)
+        set_author(d, session.get("sso_char_name", ""))
+        db.session.add(d)
+        db.session.flush()
+    else:
+        d = db.session.get(Doctrine, int(target)) if target.isdigit() else None
+        if not d:
+            flash("Pick a doctrine to copy the fit into.", "warn")
+            return redirect(url_for("doctrine", did=f.doctrine_id) + f"#fit-{f.id}")
+    new = Fit(doctrine_id=d.id, name=(f.name + " (copy)" if d.id == f.doctrine_id else f.name)[:120], ship=f.ship,
+              role=f.role, notes=f.notes, eft=f.eft, fitting_skills=f.fitting_skills or "", position=len(d.fits))
+    db.session.add(new)
+    d.updated_at = now()
+    db.session.commit()
+    extra = " It's set to private until you're ready, change that on the doctrine page." if target == "new" else ""
+    flash(f"Copied {f.name} into {d.name}. Make your changes below and save.{extra}", "ok")
+    return redirect(url_for("fit_edit", fid=new.id))
 
 
 @app.post("/doctrine/<int:did>/delete")
@@ -361,6 +469,7 @@ def _fit_data(f):
 
 def _doctrine_data(d):
     return {"id": d.id, "name": d.name, "description": d.description, "author": d.author, "author_id": d.author_id,
+            "visibility": d.visibility or "public", "is_private": bool(d.is_private),
             "created_at": _iso(d.created_at), "updated_at": _iso(d.updated_at), "fits": [_fit_data(f) for f in d.fits]}
 
 
@@ -401,6 +510,7 @@ def deleted_restore(bid):
         keep_id = data.get("id") if data.get("id") and not db.session.get(Doctrine, data["id"]) else None
         d = Doctrine(id=keep_id, name=data["name"], description=data.get("description") or "",
                      author=data.get("author") or "", author_id=data.get("author_id"),
+                     visibility=data.get("visibility") or "public", is_private=bool(data.get("is_private")),
                      created_at=_from_iso(data.get("created_at")) or now())
         db.session.add(d)
         db.session.flush()
@@ -703,13 +813,19 @@ def _save_fits(fits, doctrine_name):
 @app.post("/fit/<int:fid>/save-to-eve")
 def fit_save_eve(fid):
     f = db.get_or_404(Fit, fid)
+    visible_or_404(f.doctrine)
     return _save_fits([f], f.doctrine.name)
 
 
 @app.post("/doctrine/<int:did>/save-to-eve")
 def doctrine_save_eve(did):
-    d = db.get_or_404(Doctrine, did)
+    d = visible_or_404(db.session.get(Doctrine, did))
     return _save_fits(list(d.fits), d.name)
+
+
+@app.errorhandler(403)
+def members_only(_):
+    return render_template("base.html", members_only=True), 403
 
 
 @app.errorhandler(404)

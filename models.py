@@ -15,6 +15,8 @@ class Doctrine(db.Model):
     description = db.Column(db.Text, default="")
     author = db.Column(db.String(120), default="")
     author_id = db.Column(db.Integer)  # EVE character ID, for the portrait
+    visibility = db.Column(db.String(10), default="public")  # "public" or "alliance" (members logged in with EVE)
+    is_private = db.Column(db.Boolean, default=False)  # only owners and editors can see it (drafts, testing)
     created_at = db.Column(db.DateTime, default=now)
     updated_at = db.Column(db.DateTime, default=now, onupdate=now)
     fits = db.relationship("Fit", backref="doctrine", cascade="all, delete-orphan",

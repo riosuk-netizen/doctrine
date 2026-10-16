@@ -28,6 +28,9 @@ Live at https://doctrine-li9g.onrender.com/
   * **Editors** can add, edit and delete doctrines and fits.
   * Anyone else who logs in can browse, push fits and check their skills, but sees no edit buttons. The top bar shows each person's role next to their name.
 * **Deleted (bin icon):** anything deleted, a whole doctrine or a single fit, goes to the bin with who deleted it and when. Right after deleting, the message has an **Undo** button. On the Deleted page editors and owners can **Restore** it exactly as it was, at the same link. Only owners can **Delete for good**. A fit whose doctrine was also deleted needs the doctrine restored first.
+* **Who can see a doctrine:** on each doctrine page (and on the doctrine form) editors get a slider between **Public** (anyone with the link) and **[Alliance] only** (needs an EVE login with a character in the alliance or corps listed in `ALLIANCE_MEMBERS`). Membership is checked with EVE every 30 minutes, so anyone who leaves loses access. Outsiders can't see the name, fits or search entries of alliance-only doctrines; the front page just says how many are hidden. New doctrines start as alliance only once `ALLIANCE_MEMBERS` is set.
+* **Private:** a tick box that hides a doctrine from everyone except owners and editors, for drafts and testing. To anyone else it looks like it doesn't exist.
+* **Copy to...:** each fit has a Copy to button for editors. Pick any doctrine (or the same one, or a new one) and the fit is copied with its notes, roles and fitting skills, then you go straight to the copy's edit page. A new doctrine made this way starts as private.
 * Then use **+ New doctrine** or **Edit / add fits**. The author box starts filled with your character name.
 * Paste one or more EFT fits; each starts with its `[Ship, Fit name]` line. A role in brackets at the end of the fit name, like `(Logi)`, becomes a role tag.
 * Doctrines have an **Author** (exact in-game character name, which shows their portrait linked to zKillboard) and show **Updated x ago**, which changes whenever anything in the doctrine changes.
@@ -65,6 +68,8 @@ Live at https://doctrine-li9g.onrender.com/
   * `OWNER_CHARACTERS`: your character name, plus any others separated by commas. These are owners who can't be removed from the site itself. If nobody is set as owner, nobody can edit and a banner says so.
   * `SECRET_KEY`: any long random string.
   * `EVE_CLIENT_ID` and `EVE_CLIENT_SECRET`: from the app at developers.eveonline.com, with the scopes `esi-fittings.write_fittings.v1` and `esi-skills.read_skills.v1` and the callback URL `https://<site address>/sso/callback`. Leave them out and the EVE login buttons simply don't show.
+  * `ALLIANCE_MEMBERS`: the alliance name (or corp names, or EVE IDs) that counts as "us" for alliance-only doctrines, comma separated. Exact in-game names.
+  * `ALLIANCE_LABEL`: optional short name shown on the site, e.g. `Watchpoint`. Defaults to the first name in `ALLIANCE_MEMBERS`.
   * `DATABASE_URL`: Postgres connection string from Neon (free, doesn't expire). Without it the site falls back to SQLite, which Render wipes on every redeploy.
 * New tables are created automatically on start, and new columns added in later versions (author, author_id) are added to existing tables automatically, so updates never need a manual database step.
 * Free Render plans sleep after about 15 minutes idle; the first visit after that takes up to a minute. The $7 a month instance keeps it awake.

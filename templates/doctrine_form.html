@@ -11,6 +11,20 @@
     <label>Author <span class="hint">optional. Use the exact in-game character name and their portrait will show up.</span>
       <input name="author" maxlength="120" value="{{ form.get('author', '') }}" placeholder="e.g. Xarasier Deninard" autocomplete="off">
     </label>
+    <div class="field">
+      <span class="field-label">Who can see it <span class="hint">Public is anyone with the link. {{ member_label }} only needs an EVE login with a {{ member_label }} character.</span></span>
+      <div class="vis-controls">
+        <div class="vis-switch" role="group" aria-label="Who can see this doctrine">
+          <span class="vis-opt vis-public">Public</span>
+          <label class="switch" title="Slide right to make it {{ member_label }} only">
+            <input type="checkbox" name="visibility" value="alliance" {% if form.get('visibility', 'public') == 'alliance' %}checked{% endif %} aria-label="{{ member_label }} only">
+            <span class="slider" aria-hidden="true"></span>
+          </label>
+          <span class="vis-opt vis-alliance"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }} only</span>
+        </div>
+        <label class="check"><input type="checkbox" name="is_private" value="1" {% if form.get('is_private') %}checked{% endif %}> <span><strong>Private</strong> <span class="hint">only owners and editors can see it. For drafts and fits still being tested.</span></span></label>
+      </div>
+    </div>
     <label>Description <span class="hint">optional. Paste straight from Discord: **bold**, *italic*, `code`, - bullet lists, # headings and links all work.</span>
       <textarea name="description" rows="10">{{ form.get('description', '') }}</textarea>
     </label>

@@ -78,6 +78,12 @@
         {% else %}<div class="flash flash-{{ cat }}">{{ m }}</div>{% endif %}
       {% endfor %}
     {% endwith %}
+    {% if members_only %}
+      <div class="empty-state"><h2>{{ member_label }} members only</h2>
+        <p>This doctrine is only for {{ member_label }}. {% if pilot %}{{ pilot.name }} isn't in {{ member_label }}, so it's hidden.{% else %}Log in with EVE using a {{ member_label }} character to see it.{% endif %}</p>
+        {% if not pilot and sso_on %}<a class="btn btn-eve" href="{{ url_for('sso_login', next=request.path) }}">Log in with EVE</a>{% else %}<a class="btn" href="{{ url_for('index') }}">Back to doctrines</a>{% endif %}
+      </div>
+    {% endif %}
     {% if not_found %}
       <div class="empty-state"><h2>Lost in space</h2><p>That page doesn't exist.</p><a class="btn" href="{{ url_for('index') }}">Back to doctrines</a></div>
     {% endif %}

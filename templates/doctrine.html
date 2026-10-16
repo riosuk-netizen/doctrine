@@ -9,6 +9,10 @@
   <div>
     <a class="back" href="{{ url_for('index') }}">&larr; All doctrines</a>
     <h1>{{ d.name }}</h1>
+    {% if d.is_private or d.visibility == 'alliance' %}<p class="vis-badges">
+      {% if d.is_private %}<span class="vis-badge private">Private: owners and editors only</span>{% endif %}
+      {% if d.visibility == 'alliance' %}<span class="vis-badge alliance"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }} only</span>{% endif %}
+    </p>{% endif %}
     <div class="byline">
       {% if d.author %}
         {% if d.author_id %}
@@ -29,6 +33,20 @@
     {% if d.fits and sso_on %}<button class="btn btn-eve save-eve" type="button" data-url="{{ url_for('doctrine_save_eve', did=d.id) }}" data-confirm="Push all {{ d.fits|length }} fits to your EVE fittings?" {% if not pilot %}data-login="{{ url_for('sso_login', next=request.path) }}"{% endif %} title="Push every fit in this doctrine straight into your character's fittings">Push all to EVE</button>{% endif %}
     {% if d.fits %}<a class="btn" href="{{ url_for('doctrine_export', did=d.id) }}" title="Import every fit at once via Import & Export > Import from File">Download all (XML)</a>{% endif %}
     {% if is_admin %}
+      <form method="post" action="{{ url_for('doctrine_visibility', did=d.id) }}" class="vis-form auto-submit">
+        <div class="vis-controls">
+        <div class="vis-switch" role="group" aria-label="Who can see this doctrine">
+          <span class="vis-opt vis-public">Public</span>
+          <label class="switch" title="Slide right to make it {{ member_label }} only">
+            <input type="checkbox" name="visibility" value="alliance" {% if d.visibility == 'alliance' %}checked{% endif %} aria-label="{{ member_label }} only">
+            <span class="slider" aria-hidden="true"></span>
+          </label>
+          <span class="vis-opt vis-alliance"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }} only</span>
+        </div>
+        <label class="check"><input type="checkbox" name="is_private" value="1" {% if d.is_private %}checked{% endif %}> <span><strong>Private</strong> <span class="hint">only owners and editors can see it. For drafts and fits still being tested.</span></span></label>
+      </div>
+        <noscript><button class="btn" type="submit">Save</button></noscript>
+      </form>
       <a class="btn" href="{{ url_for('doctrine_edit', did=d.id) }}">Edit / add fits</a>
       <form method="post" action="{{ url_for('doctrine_delete', did=d.id) }}" onsubmit="return confirm('Delete {{ d.name|e }} and all its fits?')">
         <button class="btn btn-danger" type="submit">Delete</button>
@@ -75,6 +93,20 @@
           {% if sso_on %}<button class="btn btn-eve save-eve" type="button" data-url="{{ url_for('fit_save_eve', fid=f.id) }}" {% if not pilot %}data-login="{{ url_for('sso_login', next=request.path ~ '#fit-' ~ f.id) }}"{% endif %} title="{{ "Push this fit to " ~ pilot.name ~ "'s fittings" if pilot else 'Log in with EVE to push this fit straight to your character' }}">Push to EVE</button>{% endif %}
           {% if is_admin %}
             <a class="btn btn-ghost" href="{{ url_for('fit_edit', fid=f.id) }}">Edit</a>
+            <details class="copy-to">
+              <summary class="btn btn-ghost" title="Copy this fit into a doctrine to use as a starting point">Copy to&hellip;</summary>
+              <form method="post" action="{{ url_for('fit_copy', fid=f.id) }}" class="copy-pop">
+                <label>Copy {{ f.name }} into
+                  <select name="target" class="copy-target">
+                    {% for od in all_doctrines %}<option value="{{ od.id }}" {% if od.id == d.id %}selected{% endif %}>{{ od.name }}{% if od.id == d.id %} (this one){% endif %}{% if od.is_private %} [private]{% endif %}</option>{% endfor %}
+                    <option value="new">+ A new doctrine&hellip;</option>
+                  </select>
+                </label>
+                <label class="copy-new" hidden>New doctrine name <input name="new_name" maxlength="120" placeholder="e.g. {{ f.ship }} test fleet"></label>
+                <p class="hint">You'll go straight to the copy's edit page to change it. The original isn't touched.</p>
+                <button class="btn btn-primary" type="submit">Copy fit</button>
+              </form>
+            </details>
             <form method="post" action="{{ url_for('fit_move', fid=f.id, direction='up') }}"><button class="btn btn-ghost icon-btn" title="Move up" {% if loop.first %}disabled{% endif %}>&uarr;</button></form>
             <form method="post" action="{{ url_for('fit_move', fid=f.id, direction='down') }}"><button class="btn btn-ghost icon-btn" title="Move down" {% if loop.last %}disabled{% endif %}>&darr;</button></form>
             <form method="post" action="{{ url_for('fit_delete', fid=f.id) }}" onsubmit="return confirm('Remove {{ f.name|e }}?')"><button class="btn btn-ghost icon-btn danger" title="Remove fit">&times;</button></form>

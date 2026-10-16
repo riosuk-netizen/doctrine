@@ -25,7 +25,7 @@ SLOT_FLAGS = {"high": ("HiSlot", 8), "mid": ("MedSlot", 8), "low": ("LoSlot", 8)
               "rig": ("RigSlot", 3), "subsystem": ("SubSystemSlot", 4)}
 BAY_FLAGS = {"drones": "DroneBay", "fighters": "FighterBay", "cargo": "Cargo"}
 
-KEYS = ("sso_char_id", "sso_char_name", "sso_access", "sso_refresh", "sso_expires", "sso_scopes")
+KEYS = ("sso_char_id", "sso_char_name", "sso_access", "sso_refresh", "sso_expires", "sso_scopes", "sso_aff", "sso_aff_t")
 _skill_cache = {}  # character id -> (fetched at, skills); short-lived, never saved
 
 
@@ -84,6 +84,25 @@ def finish_login(sess, code, state):
 def logout(sess):
     for k in KEYS:
         sess.pop(k, None)
+
+
+def affiliation(sess):
+    """(corporation_id, alliance_id) of the logged-in pilot, from ESI's public affiliation lookup.
+    Checked again every 30 minutes so someone who leaves loses access."""
+    cid = sess.get("sso_char_id")
+    if not cid:
+        return None
+    if sess.get("sso_aff") and time.time() - sess.get("sso_aff_t", 0) < 1800:
+        return tuple(sess["sso_aff"])
+    try:
+        r = http.post(f"{ESI}/characters/affiliation/", params={"datasource": "tranquility"}, json=[cid], timeout=15)
+        r.raise_for_status()
+        row = (r.json() or [{}])[0]
+        aff = (row.get("corporation_id"), row.get("alliance_id"))
+    except Exception:
+        return tuple(sess["sso_aff"]) if sess.get("sso_aff") else None
+    sess["sso_aff"], sess["sso_aff_t"] = list(aff), int(time.time())
+    return aff
 
 
 def character(sess):

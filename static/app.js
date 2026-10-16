@@ -258,6 +258,22 @@
     if (name && window.matchMedia("(hover: none)").matches) { placeTip(name); name.classList.toggle("show"); }
   });
 
+  // Visibility switch on a doctrine page saves as soon as it's changed
+  document.addEventListener("change", (e) => {
+    const form = e.target.closest("form.auto-submit");
+    if (form) form.submit();
+    // Copy to: show the name box only when copying into a new doctrine
+    if (e.target.classList.contains("copy-target")) {
+      const box = e.target.closest("form").querySelector(".copy-new");
+      box.hidden = e.target.value !== "new";
+      if (!box.hidden) box.querySelector("input").focus();
+    }
+  });
+  // close an open Copy to box when clicking elsewhere
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll("details.copy-to[open]").forEach((dt) => { if (!dt.contains(e.target)) dt.open = false; });
+  });
+
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {
     const tile = e.target.closest(".tile[data-name]");

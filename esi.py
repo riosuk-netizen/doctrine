@@ -100,3 +100,17 @@ def character(name):
     except requests.RequestException:
         pass
     return None
+
+
+def groups(names):
+    """{lower-case name: id} for alliance and corporation names (exact names)."""
+    names = [n for n in names if n]
+    if not names:
+        return {}
+    try:
+        r = session.post(f"{ESI}/universe/ids/", params={**PARAMS, "language": "en"}, json=names, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+    except requests.RequestException:
+        return {}
+    return {g["name"].lower(): g["id"] for key in ("alliances", "corporations") for g in data.get(key, [])}

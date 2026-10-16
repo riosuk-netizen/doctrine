@@ -87,6 +87,10 @@
             {% if S and S.count and S.caps_known %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
             {% if S and S.me %}{% set me = S.me %}<span class="fly-badge {{ 'ready' if me.ready else 'short' if me.short else 'clone' }}" title="Checked against {{ pilot.name }}'s skills">{% if me.ready %}&#10003; You can fly this{% elif me.short %}Missing {{ me.short }} skill{{ 's' if me.short != 1 }}{% else %}Needs Omega{% endif %}</span>{% endif %}
           </p>
+          {% if f.edited_by %}<p class="fit-edited">
+            {% if f.edited_by_id %}<img src="https://images.evetech.net/characters/{{ f.edited_by_id }}/portrait?size=32" alt="" width="18" height="18" loading="lazy">{% endif %}
+            <span>Last edited by <strong>{{ f.edited_by }}</strong></span><span class="byline-dot" aria-hidden="true">&middot;</span><span title="{{ f.edited_at|ukdate }}">{{ f.edited_at|ago }}</span>
+          </p>{% endif %}
         </div>
         <div class="fit-buttons">
           <button class="btn btn-primary copy-btn" type="button" data-copy="eft-{{ f.id }}" data-howto="fit" data-fitname="{{ f.name }}">Copy for EVE</button>

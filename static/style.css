@@ -608,3 +608,8 @@ label.check input { width: auto; margin-top: 3px; accent-color: var(--accent); }
 .copy-pop select { padding: 9px 10px; border-radius: 8px; background: var(--bg-2); color: var(--text); border: 1px solid var(--line); font: inherit; font-weight: 400; }
 .copy-pop .hint { margin: 0; font-size: .8rem; }
 .copy-new[hidden] { display: none; }
+
+/* who last edited a fit */
+.fit-edited { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 0; font-size: .8rem; color: var(--muted); }
+.fit-edited img { border-radius: 4px; }
+.fit-edited strong { color: var(--text); font-weight: 600; }

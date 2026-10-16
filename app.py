@@ -49,6 +49,9 @@ with app.app_context():
         ("fit", "fitting_skills", "TEXT DEFAULT ''"),
         ("doctrine", "visibility", "VARCHAR(10) DEFAULT 'public'"),
         ("doctrine", "is_private", "BOOLEAN DEFAULT FALSE"),
+        ("fit", "edited_by", "VARCHAR(120) DEFAULT ''"),
+        ("fit", "edited_by_id", "INTEGER"),
+        ("fit", "edited_at", "TIMESTAMP"),
     )
     for _table, _name, _sql in _new_cols:
         if _name not in {c["name"] for c in inspect(db.engine).get_columns(_table)}:
@@ -102,6 +105,13 @@ app.jinja_env.filters["ago"] = ago
 META_NAMES = {2: "Tech II", 3: "Storyline", 4: "Faction", 5: "Officer", 6: "Deadspace", 14: "Tech III"}
 app.jinja_env.globals["META_NAMES"] = META_NAMES
 app.jinja_env.filters["tags"] = lambda s: [t.strip() for t in (s or "").split(",") if t.strip()]
+
+
+def stamp(f):
+    """Remember who last added or changed a fit, and when."""
+    f.edited_by = session.get("sso_char_name", "") or ""
+    f.edited_by_id = session.get("sso_char_id")
+    f.edited_at = now()
 
 
 def set_author(d, name):
@@ -264,6 +274,7 @@ def add_fits_from_text(doctrine, text):
         if m:
             role = m.group(1)
         fit = Fit(name=p["name"][:120], ship=p["ship"][:120], role=role, eft=block, position=start + i)
+        stamp(fit)
         doctrine.fits.append(fit)
         added.append(p)
     # warm the type cache and report anything ESI could not match
@@ -430,6 +441,7 @@ def fit_copy(fid):
             return redirect(url_for("doctrine", did=f.doctrine_id) + f"#fit-{f.id}")
     new = Fit(doctrine_id=d.id, name=(f.name + " (copy)" if d.id == f.doctrine_id else f.name)[:120], ship=f.ship,
               role=f.role, notes=f.notes, eft=f.eft, fitting_skills=f.fitting_skills or "", position=len(d.fits))
+    stamp(new)
     db.session.add(new)
     d.updated_at = now()
     db.session.commit()
@@ -464,7 +476,8 @@ def _from_iso(s):
 
 def _fit_data(f):
     return {"id": f.id, "name": f.name, "ship": f.ship, "role": f.role, "notes": f.notes, "eft": f.eft,
-            "position": f.position, "fitting_skills": f.fitting_skills or ""}
+            "position": f.position, "fitting_skills": f.fitting_skills or "",
+            "edited_by": f.edited_by or "", "edited_by_id": f.edited_by_id, "edited_at": _iso(f.edited_at)}
 
 
 def _doctrine_data(d):
@@ -489,7 +502,8 @@ def _make_fit(fd, doctrine_id):
     keep_id = fd.get("id") if fd.get("id") and not db.session.get(Fit, fd["id"]) else None
     return Fit(id=keep_id, doctrine_id=doctrine_id, name=fd["name"], ship=fd["ship"], role=fd.get("role") or "",
                notes=fd.get("notes") or "", eft=fd["eft"], position=fd.get("position") or 0,
-               fitting_skills=fd.get("fitting_skills") or "")
+               fitting_skills=fd.get("fitting_skills") or "", edited_by=fd.get("edited_by") or "",
+               edited_by_id=fd.get("edited_by_id"), edited_at=_from_iso(fd.get("edited_at")))
 
 
 @app.route("/deleted")
@@ -592,6 +606,7 @@ def fit_edit(fid):
             if 1 <= lvl <= 5:
                 chosen[str(sid)] = lvl
         f.fitting_skills = json.dumps(chosen)
+        stamp(f)
         f.doctrine.updated_at = now()
         db.session.commit()
         flash("Fit saved.", "ok")

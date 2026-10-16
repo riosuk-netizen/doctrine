@@ -33,6 +33,9 @@ class Fit(db.Model):
     eft = db.Column(db.Text, nullable=False)
     position = db.Column(db.Integer, default=0)
     fitting_skills = db.Column(db.Text, default="")  # JSON {skill_id: level}, set by editors
+    edited_by = db.Column(db.String(120), default="")  # character who last added or changed this fit
+    edited_by_id = db.Column(db.Integer)
+    edited_at = db.Column(db.DateTime)
 
     def fitting_levels(self):
         import json

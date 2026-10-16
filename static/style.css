@@ -582,8 +582,14 @@ label.check { flex-direction: row; align-items: flex-start; gap: 8px; font-weigh
 label.check input { width: auto; margin-top: 3px; accent-color: var(--accent); }
 .field { display: flex; flex-direction: column; gap: 8px; }
 .field-label { font-weight: 600; font-size: .9rem; display: flex; flex-direction: column; gap: 4px; }
-.vis-form { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
-.vis-form .vis-controls { gap: 6px; }
+.vis-form { display: inline-flex; align-items: center; height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
+.vis-form .vis-controls { flex-direction: row; align-items: center; gap: 12px; }
+.vis-form .vis-switch { gap: 7px; font-size: .85rem; }
+.vis-form .switch { width: 34px; height: 20px; }
+.vis-form .slider::before { top: 2px; left: 2px; width: 14px; height: 14px; }
+.vis-form .switch input:checked + .slider::before { transform: translateX(14px); }
+.vis-form label.check { align-items: center; gap: 5px; font-size: .85rem; padding-left: 12px; border-left: 1px solid var(--line); }
+.vis-form label.check input { margin: 0; }
 .vis-form label.check .hint { display: none; }
 .vis-badges { margin: 6px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
 .vis-badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: .74rem; font-weight: 700; letter-spacing: .03em; border: 1px solid; vertical-align: middle; font-family: "Inter", sans-serif; text-transform: none; }

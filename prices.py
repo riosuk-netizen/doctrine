@@ -5,6 +5,7 @@ using the sell side, which is what a pilot pays to buy the fit. If Fuzzwork can'
 ESI's average market price is used instead. Prices are cached in the database for an hour.
 """
 import json
+import math
 import time
 from datetime import datetime, timezone
 
@@ -120,9 +121,24 @@ def fit_costs(layouts):
             total += p * qty
             if tid == L.get("ship_id"):
                 hull = p
-        out[fid] = {"total": total, "hull": hull, "fitting": total - hull, "missing": missing,
-                    "source": source, "at": at}
+        out[fid] = {"total": total, "budget": budget(total), "hull": hull, "fitting": total - hull,
+                    "missing": missing, "source": source, "at": at}
     return out, prices
+
+
+SPARE = 1_000_000  # added on top so pilots aren't caught short by a price change
+
+
+def budget(total):
+    """What to show pilots: the Jita total rounded up to the next whole million, plus 1 million spare."""
+    if not total:
+        return 0
+    return math.ceil(total / 1_000_000) * 1_000_000 + SPARE
+
+
+def isk_budget(value):
+    """Always whole millions so the spare million shows: 47000000 -> '47m', 1242000000 -> '1,242m'."""
+    return f"{int(round(float(value or 0) / 1e6)):,}m"
 
 
 def isk(value):

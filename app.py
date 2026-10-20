@@ -103,6 +103,7 @@ def ago(dt):
 app.jinja_env.filters["ukdate"] = ukdate
 app.jinja_env.filters["fromjson"] = json.loads
 app.jinja_env.filters["isk"] = prices.isk
+app.jinja_env.filters["isk_budget"] = prices.isk_budget
 app.jinja_env.filters["ago"] = ago
 META_NAMES = {2: "Tech II", 3: "Storyline", 4: "Faction", 5: "Officer", 6: "Deadspace", 14: "Tech III"}
 app.jinja_env.globals["META_NAMES"] = META_NAMES

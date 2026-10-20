@@ -84,7 +84,7 @@
           <p class="ship">{{ f.ship }}{% for tag in f.role|tags %} <span class="role">{{ tag }}</span>{% endfor %}
             {% if S and S.count and S.caps_known %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
             {% if S and S.me %}{% set me = S.me %}<span class="fly-badge {{ 'ready' if me.ready else 'short' if me.short else 'clone' }}" title="Checked against {{ pilot.name }}'s skills">{% if me.ready %}&#10003; You can fly this{% elif me.short %}Missing {{ me.short }} skill{{ 's' if me.short != 1 }}{% else %}Needs Omega{% endif %}</span>{% endif %}
-            {% set C = costs.get(f.id) %}{% if C and C.total %}<span class="price-pill" title="Hull {{ C.hull|isk }} + modules, drones and cargo {{ C.fitting|isk }} ISK. {{ C.source }} prices, checked {{ C.at|ago }}. Ammo loaded in guns isn't counted, ammo in the cargo is.{% if C.missing %} {{ C.missing }} item{{ 's have' if C.missing != 1 else ' has' }} no price.{% endif %}">&asymp; {{ C.total|isk }} ISK</span>{% endif %}
+            {% set C = costs.get(f.id) %}{% if C and C.total %}<span class="price-pill" title="Jita price {{ C.total|isk }}, rounded up and 1m added for spare. Hull {{ C.hull|isk }} + modules, drones and cargo {{ C.fitting|isk }}. {{ C.source }} prices, checked {{ C.at|ago }}. Ammo loaded in guns isn't counted, ammo in the cargo is.{% if C.missing %} {{ C.missing }} item{{ 's have' if C.missing != 1 else ' has' }} no price.{% endif %}">{{ C.budget|isk_budget }} ISK</span>{% endif %}
           </p>
           {% if f.edited_by %}<p class="fit-edited">
             {% if f.edited_by_id %}<img src="https://images.evetech.net/characters/{{ f.edited_by_id }}/portrait?size=32" alt="" width="18" height="18" loading="lazy">{% endif %}
@@ -228,8 +228,8 @@
 
       <div class="tab-panel" id="list-{{ f.id }}" role="tabpanel" hidden>
         {% set C = costs.get(f.id) %}{% if C and C.total %}<div class="price-summary">
-          <span><strong>&asymp; {{ C.total|isk }} ISK</strong> to buy the whole fit</span>
-          <span class="muted">Hull {{ C.hull|isk }} &middot; modules, drones and cargo {{ C.fitting|isk }} &middot; {{ C.source }}, checked {{ C.at|ago }}</span>
+          <span><strong>Bring {{ C.budget|isk_budget }} ISK</strong> to buy the whole fit</span>
+          <span class="muted">Jita price {{ C.total|isk }}, rounded up with 1m added for spare &middot; hull {{ C.hull|isk }} &middot; modules, drones and cargo {{ C.fitting|isk }} &middot; {{ C.source }}, checked {{ C.at|ago }}</span>
           <span class="muted">Ammo loaded in guns isn't counted, ammo in the cargo is.{% if C.missing %} {{ C.missing }} item{{ 's have' if C.missing != 1 else ' has' }} no price.{% endif %}</span>
         </div>{% endif %}
         <div class="list-cols">

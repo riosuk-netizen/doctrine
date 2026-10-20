@@ -21,7 +21,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Skill descriptions:** hover over any skill name (tap on phones) to see EVE's own description, plus its rank and training attributes.
 * **Training time:** the Required skills tab shows roughly how long the whole fit takes to train from a brand new character (Omega, average attributes, no implants). Logged-in pilots also see how long their missing skills will take with their own attributes, at half speed if they're on an alpha clone. Skill ranks and attributes come from ESI and are cached in the database.
 * Each fit shows **Last edited by [character] · [time]** with their portrait, updated whenever a fit is added, edited or copied. Fits from before this was added show nothing until someone next edits them.
-* **Fit cost:** each fit shows roughly what it costs to buy at Jita (Jita 4-4 sell prices from Fuzzwork, or EVE's average price if that's down), with hull and modules split out on hover. The Module list tab shows the price of every item. Ammo loaded in guns isn't counted, ammo in the cargo is. Prices are cached for an hour.
+* **Fit cost:** each fit shows what to bring to buy it at Jita: the Jita total rounded up to the next whole million, plus 1 million spare (e.g. 45.3m shows as 47m). The exact Jita figure is on hover and in the Module list. Prices are (Jita 4-4 sell prices from Fuzzwork, or EVE's average price if that's down), with hull and modules split out on hover. The Module list tab shows the price of every item. Ammo loaded in guns isn't counted, ammo in the cargo is. Prices are cached for an hour.
 * Fits can have several role tags, picked with buttons or typed separated by commas (e.g. `EWAR, DPS`).
 
 **For editors**

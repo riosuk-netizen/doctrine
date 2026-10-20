@@ -637,3 +637,11 @@ label.check input { width: auto; margin-top: 3px; accent-color: var(--accent); }
 .chip-toggle.chip-private.on { border-color: rgba(150,110,230,.6); background: rgba(150,110,230,.12); color: #d6c8f7; }
 .chip-toggle.chip-private.on .chip-box { background: #9670e6; border-color: #9670e6; }
 .field .seg { align-self: flex-start; }
+
+/* role tag buttons */
+.role-picker { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.role-chip { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-2); color: var(--muted);
+  font: 600 .8rem "Inter", sans-serif; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.role-chip:hover { color: var(--text); border-color: #3a4a60; }
+.role-chip.on { background: rgba(232,163,60,.16); border-color: rgba(232,163,60,.55); color: var(--accent-2); }
+.role-chip.on::before { content: "\2713  "; }

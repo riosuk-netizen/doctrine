@@ -256,8 +256,25 @@ def layouts_for(fits):
     return {fid: build_layout(p, info) for fid, p in parsed.items()}
 
 
-def add_fits_from_text(doctrine, text):
-    """Parse pasted EFT text into Fit rows. Returns (added count, error messages)."""
+ROLE_PRESETS = ["DPS", "Logi", "Tackle", "Heavy Tackle", "EWAR", "Scout", "Support", "Links", "Bait"]
+app.jinja_env.globals["ROLE_PRESETS"] = ROLE_PRESETS
+
+
+def clean_roles(text):
+    """'dps,  Tackle ,tackle' -> 'DPS, Tackle': trimmed, no repeats, preset spelling kept."""
+    out, seen = [], set()
+    presets = {r.lower(): r for r in ROLE_PRESETS}
+    for t in (text or "").split(","):
+        t = t.strip()
+        if t and t.lower() not in seen:
+            seen.add(t.lower())
+            out.append(presets.get(t.lower(), t))
+    return ", ".join(out)[:60]
+
+
+def add_fits_from_text(doctrine, text, roles=""):
+    """Parse pasted EFT text into Fit rows. Returns (added count, error messages).
+    roles: role tags chosen on the form, given to every fit pasted in this go."""
     blocks = split_fits(text)
     if not blocks:
         return 0, ["No fits found. Each fit should start with a line like [Ship, Fit name]."]
@@ -269,11 +286,7 @@ def add_fits_from_text(doctrine, text):
         except EFTError as e:
             errors.append(str(e))
             continue
-        role = ""
-        m = re.search(r"\(([^)]{1,40})\)\s*$", p["name"])  # "Fit name (Logi)" -> role Logi
-        if m:
-            role = m.group(1)
-        fit = Fit(name=p["name"][:120], ship=p["ship"][:120], role=role, eft=block, position=start + i)
+        fit = Fit(name=p["name"][:120], ship=p["ship"][:120], role=clean_roles(roles), eft=block, position=start + i)
         stamp(fit)
         doctrine.fits.append(fit)
         added.append(p)
@@ -369,7 +382,7 @@ def doctrine_new():
         set_author(d, request.form.get("author", ""))
         _set_visibility(d, request.form)
         db.session.add(d)
-        n, errors = add_fits_from_text(d, request.form.get("eft", ""))
+        n, errors = add_fits_from_text(d, request.form.get("eft", ""), request.form.get("role", ""))
         if n == 0:
             db.session.rollback()
             for e in errors:
@@ -396,7 +409,7 @@ def doctrine_edit(did):
         d.updated_at = now()
         n, errors = (0, [])
         if request.form.get("eft", "").strip():
-            n, errors = add_fits_from_text(d, request.form["eft"])
+            n, errors = add_fits_from_text(d, request.form["eft"], request.form.get("role", ""))
         db.session.commit()
         for e in errors:
             flash(e, "warn")
@@ -604,7 +617,7 @@ def fit_edit(fid):
             return render_template("fit_form.html", f=f, form=request.form, **fitting_form(f, request.form))
         f.eft, f.ship = eft_text, p["ship"][:120]
         f.name = request.form.get("name", "").strip()[:120] or p["name"][:120]
-        f.role = request.form.get("role", "").strip()[:60]
+        f.role = clean_roles(request.form.get("role", ""))
         f.notes = request.form.get("notes", "").strip()
         chosen = {}
         for sid, _ in skills.FITTING_SKILLS:

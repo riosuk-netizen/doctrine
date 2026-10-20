@@ -21,7 +21,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Skill descriptions:** hover over any skill name (tap on phones) to see EVE's own description, plus its rank and training attributes.
 * **Training time:** the Required skills tab shows roughly how long the whole fit takes to train from a brand new character (Omega, average attributes, no implants). Logged-in pilots also see how long their missing skills will take with their own attributes, at half speed if they're on an alpha clone. Skill ranks and attributes come from ESI and are cached in the database.
 * Each fit shows **Last edited by [character] · [time]** with their portrait, updated whenever a fit is added, edited or copied. Fits from before this was added show nothing until someone next edits them.
-* Fits can have several role tags, separated by commas (e.g. `EWAR, DPS`).
+* Fits can have several role tags, picked with buttons or typed separated by commas (e.g. `EWAR, DPS`).
 
 **For editors**
 * Editing uses EVE login, not a password. There are two roles:
@@ -33,7 +33,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Show private doctrines:** private doctrines are hidden from the front page and search for everyone, editors included, until an editor ticks **Show private doctrines** under the search box. The choice is remembered in that browser.
 * **Copy to...:** each fit has a Copy to button for editors. Pick any doctrine (or the same one, or a new one) and the fit is copied with its notes, roles and fitting skills, then you go straight to the copy's edit page. A new doctrine made this way starts as private.
 * Then use **+ New doctrine** or **Edit / add fits**. The author box starts filled with your character name.
-* Paste one or more EFT fits; each starts with its `[Ship, Fit name]` line. A role in brackets at the end of the fit name, like `(Logi)`, becomes a role tag.
+* Paste one or more EFT fits; each starts with its `[Ship, Fit name]` line. Pick role tags with the buttons under the fits box (DPS, Logi, Tackle and so on) or type your own; every fit pasted in that go gets them, and each fit's tags can be changed on its own edit page. Stray tag lines like `(Tackle)` in the pasted text are ignored instead of showing as unknown modules.
 * Doctrines have an **Author** (exact in-game character name, which shows their portrait linked to zKillboard) and show **Updated x ago**, which changes whenever anything in the doctrine changes.
 * Descriptions and fit notes take Discord formatting: `**bold**`, `*italic*`, `__underline__`, `~~strike~~`, `` `code` ``, `- bullets`, `1. numbers`, `#` headings, `-#` small text, `>` quotes and links. Copy a Discord message with **Copy Text** to keep the formatting.
 

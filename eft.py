@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 
 HEADER_RE = re.compile(r"^\[([^,\]]+),\s*(.*)\]$")
 EMPTY_RE = re.compile(r"^\[Empty .* slot\]$", re.I)
+TAG_LINE_RE = re.compile(r"^(\([^()]{1,40}\)|\[[^\[\],]{1,40}\])$")  # a lone "(Tackle)" or "[Tackle]" line
 QTY_RE = re.compile(r"^(.*?)\s+x(\d+)$")
 SUBSYSTEM_RE = re.compile(r"^(Legion|Loki|Proteus|Tengu) (Core|Defensive|Offensive|Propulsion) - ")
 
@@ -81,6 +82,8 @@ def parse_fit(text):
                 raw_sections.append(cur)
                 cur = []
             continue
+        if TAG_LINE_RE.match(s) and not EMPTY_RE.match(s):
+            continue  # someone typed a role tag on its own line; it isn't a module
         cur.append(_parse_line(s))
     if cur:
         raw_sections.append(cur)

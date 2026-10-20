@@ -295,6 +295,34 @@
     document.querySelectorAll("details.copy-to[open]").forEach((dt) => { if (!dt.contains(e.target)) dt.open = false; });
   });
 
+  // Role tag buttons: click to add or remove a tag in the box next to them
+  const tagsOf = (input) => input.value.split(",").map((t) => t.trim()).filter(Boolean);
+  function paintRoles(picker) {
+    const input = document.getElementById(picker.dataset.for);
+    const have = tagsOf(input).map((t) => t.toLowerCase());
+    picker.querySelectorAll(".role-chip").forEach((b) => {
+      const on = have.includes(b.dataset.role.toLowerCase());
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  document.querySelectorAll(".role-picker").forEach((picker) => {
+    const input = document.getElementById(picker.dataset.for);
+    if (!input) return;
+    paintRoles(picker);
+    input.addEventListener("input", () => paintRoles(picker));
+    picker.addEventListener("click", (e) => {
+      const b = e.target.closest(".role-chip");
+      if (!b) return;
+      e.preventDefault();
+      const tags = tagsOf(input);
+      const i = tags.findIndex((t) => t.toLowerCase() === b.dataset.role.toLowerCase());
+      if (i >= 0) tags.splice(i, 1); else tags.push(b.dataset.role);
+      input.value = tags.join(", ");
+      paintRoles(picker);
+    });
+  });
+
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {
     const tile = e.target.closest(".tile[data-name]");

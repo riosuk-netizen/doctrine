@@ -323,12 +323,12 @@ def index():
                 "fit": f.name, "ship": f.ship, "cls": classes.get(sid, ""), "roles": app.jinja_env.filters["tags"](f.role),
                 "author": d.author or "", "modules": modules,
                 "icon": f"{IMG}/{sid}/icon?size=64" if sid else "", "meta": ship_meta.get(sid, 0) if sid else 0,
-                "fly": fly.get(f.id, ""),
+                "fly": fly.get(f.id, ""), "private": bool(d.is_private),
             })
-    search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "",
+    search_doctrines = [{"name": d.name, "url": url_for("doctrine", did=d.id), "author": d.author or "", "private": bool(d.is_private),
                          "desc": markup.plain(d.description or "")[:300], "fits": len(d.fits)} for d in doctrines]
     return render_template("index.html", doctrines=doctrines, ship_ids=ship_ids, ship_meta=ship_meta, ready=ready,
-                           hidden_alliance=hidden_alliance,
+                           hidden_alliance=hidden_alliance, private_count=sum(1 for d in doctrines if d.is_private),
                            search_data={"fits": search_fits, "doctrines": search_doctrines, "meta": META_NAMES,
                                         "skills_known": have is not None})
 
@@ -381,7 +381,7 @@ def doctrine_new():
         flash(f"Doctrine created with {n} fit{'s' if n != 1 else ''}.", "ok")
         return redirect(url_for("doctrine", did=d.id))
     return render_template("doctrine_form.html", d=None, form={"author": session.get("sso_char_name", ""),
-                                                            "visibility": "alliance" if MEMBER_SPEC else "public"})
+                                                            "access": "private"})
 
 
 @app.route("/doctrine/<int:did>/edit", methods=["GET", "POST"])
@@ -403,12 +403,21 @@ def doctrine_edit(did):
         flash("Doctrine updated" + (f", {n} fit{'s' if n != 1 else ''} added." if n else "."), "ok")
         return redirect(url_for("doctrine", did=d.id))
     return render_template("doctrine_form.html", d=d, form={"name": d.name, "description": d.description, "author": d.author or "",
-                                                         "visibility": d.visibility or "public", "is_private": d.is_private})
+                                                         "access": "private" if d.is_private else (d.visibility or "public")})
 
 
 def _set_visibility(d, form):
-    d.visibility = "alliance" if form.get("visibility") == "alliance" else "public"
-    d.is_private = form.get("is_private") in ("1", "on", "true")
+    """Private / alliance only / public, from the three-way switch."""
+    access = form.get("access")
+    if access == "private":
+        d.is_private = True
+        d.visibility = d.visibility or "alliance"
+    elif access in ("alliance", "public"):
+        d.is_private = False
+        d.visibility = access
+    else:  # older forms
+        d.visibility = "alliance" if form.get("visibility") == "alliance" else "public"
+        d.is_private = form.get("is_private") in ("1", "on", "true")
 
 
 @app.post("/doctrine/<int:did>/visibility")

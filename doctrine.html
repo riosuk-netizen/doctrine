@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
+{% block og_title %}{{ d.name }} · Rift Watch Fleet Doctrines{% endblock %}
+{% block og_desc %}{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}: {{ d.fits|map(attribute='ship')|unique|join(', ')|truncate(150) }}{% if d.description %}. {{ d.description|plain|truncate(140) }}{% endif %}{% endblock %}
+{% macro sname(sk) %}<span class="skill-name{% if sk.desc %} has-tip{% endif %}"{% if sk.desc %} tabindex="0"{% endif %}>{{ sk.name }}{% if sk.desc %}<span class="skill-tip" role="tooltip"><strong>{{ sk.name }}</strong><span class="tip-meta">Rank {{ sk.rank }}{% if sk.attrs %} &middot; {{ sk.attrs }}{% endif %}</span>{{ sk.desc }}</span>{% endif %}</span>{% endmacro %}
+{% macro mine(sk) %}{% if sk.state %}<span class="you {{ sk.state }}" title="{% if sk.state == 'clone' %}You've trained this to {{ sk.have }}, but an alpha clone can only use up to {{ sk.active }}. This fit needs {{ sk.level }}.{% elif sk.state == 'short' %}You have {{ sk.have }}, this fit needs {{ sk.level }}{% else %}You have {{ sk.active }}, this fit needs {{ sk.level }}{% endif %}">{% if sk.state == 'ok' %}&#10003; Trained{% elif sk.state == 'clone' %}Needs Omega{% elif sk.have %}Have {{ sk.have }}, need {{ sk.level }}{% else %}Not trained, need {{ sk.level }}{% endif %}</span>{% endif %}{% endmacro %}
+{% block content %}
+<section class="doc-head">
+  <div>
+    <a class="back" href="{{ url_for('index') }}">&larr; All doctrines</a>
+    <h1>{{ d.name }}</h1>
+    {% if d.is_private or d.visibility == 'alliance' %}<p class="vis-badges">
+      {% if d.is_private %}<span class="vis-badge private">Private: owners and editors only</span>{% endif %}
+      {% if d.visibility == 'alliance' %}<span class="vis-badge alliance"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }} only</span>{% endif %}
+    </p>{% endif %}
+    <div class="byline">
+      {% if d.author %}
+        {% if d.author_id %}
+          <a class="author" href="https://zkillboard.com/character/{{ d.author_id }}/" target="_blank" rel="noopener" title="{{ d.author }} on zKillboard">
+            <img src="https://images.evetech.net/characters/{{ d.author_id }}/portrait?size=64" alt="" width="28" height="28" loading="lazy">
+            <span>By <strong>{{ d.author }}</strong></span>
+          </a>
+        {% else %}
+          <span class="author"><span>By <strong>{{ d.author }}</strong></span></span>
+        {% endif %}
+        <span class="byline-dot" aria-hidden="true">·</span>
+      {% endif %}
+      <span class="updated" title="{{ d.updated_at|ukdate }}">Updated {{ d.updated_at|ago }}</span>
+    </div>
+    {% if d.description %}<div class="desc rich">{{ d.description|md }}</div>{% endif %}
+  </div>
+  <div class="doc-actions">
+    {% if d.fits and sso_on %}<button class="btn btn-eve save-eve" type="button" data-url="{{ url_for('doctrine_save_eve', did=d.id) }}" data-confirm="Push all {{ d.fits|length }} fits to your EVE fittings?" {% if not pilot %}data-login="{{ url_for('sso_login', next=request.path) }}"{% endif %} title="Push every fit in this doctrine straight into your character's fittings">Push all to EVE</button>{% endif %}
+    {% if d.fits %}<a class="btn" href="{{ url_for('doctrine_export', did=d.id) }}" title="Import every fit at once via Import & Export > Import from File">Download all (XML)</a>{% endif %}
+    {% if is_admin %}
+      <form method="post" action="{{ url_for('doctrine_visibility', did=d.id) }}" class="vis-form auto-submit">
+        <div class="seg" role="radiogroup" aria-label="Who can see this doctrine">
+        <input type="radio" class="seg-private" id="acc-private-{{ d.id }}" name="access" value="private" {% if ('private' if d.is_private else (d.visibility or 'public')) == 'private' %}checked{% endif %}>
+        <label for="acc-private-{{ d.id }}" title="Only owners and editors can see it. For drafts and fits still being tested."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Private</label>
+        <input type="radio" class="seg-alliance" id="acc-alliance-{{ d.id }}" name="access" value="alliance" {% if ('private' if d.is_private else (d.visibility or 'public')) == 'alliance' %}checked{% endif %}>
+        <label for="acc-alliance-{{ d.id }}" title="Needs an EVE login with a {{ member_label }} character"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }}</label>
+        <input type="radio" class="seg-public" id="acc-public-{{ d.id }}" name="access" value="public" {% if ('private' if d.is_private else (d.visibility or 'public')) == 'public' %}checked{% endif %}>
+        <label for="acc-public-{{ d.id }}" title="Anyone with the link"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>Public</label>
+        <span class="seg-thumb" aria-hidden="true"></span>
+      </div>
+        <noscript><button class="btn" type="submit">Save</button></noscript>
+      </form>
+      <a class="btn" href="{{ url_for('doctrine_edit', did=d.id) }}">Edit / add fits</a>
+      <form method="post" action="{{ url_for('doctrine_delete', did=d.id) }}" onsubmit="return confirm('Delete {{ d.name|e }} and all its fits?')">
+        <button class="btn btn-danger" type="submit">Delete</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+
+{% if pilot and not pilot_skills_ok %}
+  <div class="flash flash-info relogin">Want to see which of these fits you can fly? <a href="{{ url_for('sso_login', next=request.path) }}">Log in with EVE again</a> and allow the site to read your skills.</div>
+{% endif %}
+{% if d.fits %}
+<nav class="fit-jump">
+  {% for f in d.fits %}{% set L = layouts[f.id] %}
+    <a href="#fit-{{ f.id }}">{% if L.ship_id %}<img src="{{ icon(L.ship_id, 32) }}" alt="">{% endif %}{{ f.name }}</a>
+  {% endfor %}
+</nav>
+{% endif %}
+
+<div class="fits">
+{% for f in d.fits %}
+  {% set L = layouts[f.id] %}
+  <article class="fit" id="fit-{{ f.id }}">
+    <div class="fit-hull">
+      {% if L.ship_id %}<div class="hull-wrap" title="{{ f.ship }}">
+        <img class="hull-render" src="{{ render_img(L.ship_id, 256) }}" srcset="{{ render_img(L.ship_id, 256) }} 1x, {{ render_img(L.ship_id, 512) }} 2x" alt="{{ f.ship }}" width="200" height="200" loading="lazy">
+        {% set m = ship_meta.get(L.ship_id, 0) %}{% if m in META_NAMES %}<span class="meta-mark m{{ m }}" title="{{ META_NAMES[m] }}" aria-label="{{ META_NAMES[m] }}"></span>{% endif %}
+      </div>
+      {% else %}<div class="hull-render hull-missing">?</div>{% endif %}
+    </div>
+
+    <div class="fit-body">
+      <header class="fit-title">
+        <div>
+          <h2>{{ f.name }}</h2>
+          {% set S = skill_views.get(f.id) %}
+          <p class="ship">{{ f.ship }}{% for tag in f.role|tags %} <span class="role">{{ tag }}</span>{% endfor %}
+            {% if S and S.count and S.caps_known %}<span class="clone-badge {{ 'omega' if S.omega else 'alpha' }}" title="{{ 'Needs an Omega clone' if S.omega else 'Alpha clones can fly this fit' }}">{{ 'Omega' if S.omega else 'Alpha OK' }}</span>{% endif %}
+            {% if S and S.me %}{% set me = S.me %}<span class="fly-badge {{ 'ready' if me.ready else 'short' if me.short else 'clone' }}" title="Checked against {{ pilot.name }}'s skills">{% if me.ready %}&#10003; You can fly this{% elif me.short %}Missing {{ me.short }} skill{{ 's' if me.short != 1 }}{% else %}Needs Omega{% endif %}</span>{% endif %}
+          </p>
+          {% if f.edited_by %}<p class="fit-edited">
+            {% if f.edited_by_id %}<img src="https://images.evetech.net/characters/{{ f.edited_by_id }}/portrait?size=32" alt="" width="18" height="18" loading="lazy">{% endif %}
+            <span>Last edited by <strong>{{ f.edited_by }}</strong></span><span class="byline-dot" aria-hidden="true">&middot;</span><span title="{{ f.edited_at|ukdate }}">{{ f.edited_at|ago }}</span>
+          </p>{% endif %}
+        </div>
+        <div class="fit-buttons">
+          <button class="btn btn-primary copy-btn" type="button" data-copy="eft-{{ f.id }}" data-howto="fit" data-fitname="{{ f.name }}">Copy for EVE</button>
+          {% if sso_on %}<button class="btn btn-eve save-eve" type="button" data-url="{{ url_for('fit_save_eve', fid=f.id) }}" {% if not pilot %}data-login="{{ url_for('sso_login', next=request.path ~ '#fit-' ~ f.id) }}"{% endif %} title="{{ "Push this fit to " ~ pilot.name ~ "'s fittings" if pilot else 'Log in with EVE to push this fit straight to your character' }}">Push to EVE</button>{% endif %}
+          {% if is_admin %}
+            <a class="btn btn-ghost" href="{{ url_for('fit_edit', fid=f.id) }}">Edit</a>
+            <details class="copy-to">
+              <summary class="btn btn-ghost" title="Copy this fit into a doctrine to use as a starting point">Copy to&hellip;</summary>
+              <form method="post" action="{{ url_for('fit_copy', fid=f.id) }}" class="copy-pop">
+                <label>Copy {{ f.name }} into
+                  <select name="target" class="copy-target">
+                    {% for od in all_doctrines %}<option value="{{ od.id }}" {% if od.id == d.id %}selected{% endif %}>{{ od.name }}{% if od.id == d.id %} (this one){% endif %}{% if od.is_private %} [private]{% endif %}</option>{% endfor %}
+                    <option value="new">+ A new doctrine&hellip;</option>
+                  </select>
+                </label>
+                <label class="copy-new" hidden>New doctrine name <input name="new_name" maxlength="120" placeholder="e.g. {{ f.ship }} test fleet"></label>
+                <p class="hint">You'll go straight to the copy's edit page to change it. The original isn't touched.</p>
+                <button class="btn btn-primary" type="submit">Copy fit</button>
+              </form>
+            </details>
+            <form method="post" action="{{ url_for('fit_move', fid=f.id, direction='up') }}"><button class="btn btn-ghost icon-btn" title="Move up" {% if loop.first %}disabled{% endif %}>&uarr;</button></form>
+            <form method="post" action="{{ url_for('fit_move', fid=f.id, direction='down') }}"><button class="btn btn-ghost icon-btn" title="Move down" {% if loop.last %}disabled{% endif %}>&darr;</button></form>
+            <form method="post" action="{{ url_for('fit_delete', fid=f.id) }}" onsubmit="return confirm('Remove {{ f.name|e }}?')"><button class="btn btn-ghost icon-btn danger" title="Remove fit">&times;</button></form>
+          {% endif %}
+        </div>
+      </header>
+
+      {% if f.notes %}<div class="notes rich">{{ f.notes|md }}</div>{% endif %}
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" type="button" role="tab" aria-selected="true" data-tab="slots-{{ f.id }}">Fit</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="skills-{{ f.id }}">Required skills{% if S and S.count %} <span class="tab-count">{{ S.count }}</span>{% endif %}</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="list-{{ f.id }}">Module list</button>
+      </div>
+
+      <div class="tab-panel" id="slots-{{ f.id }}" role="tabpanel">
+      <div class="slots">
+        {% for kind in ORDER %}{% set items = L.groups[kind] %}
+          {% if items %}
+          <div class="slot-row slot-{{ kind }}">
+            <span class="slot-label">{{ LABELS[kind] }}</span>
+            <div class="tiles">
+              {% for it in items %}
+                {% if it.empty %}
+                  <div class="tile empty" title="{{ it.label }}"></div>
+                {% else %}
+                  <div class="tile{% if it.offline %} offline{% endif %}{% if not it.type_id %} unresolved{% endif %}"
+                       tabindex="0" data-name="{{ it.name }}{% if it.charge %} · {{ it.charge }}{% endif %}{% if it.offline %} (offline){% endif %}"
+                       title="{{ it.name }}{% if it.charge %} · {{ it.charge }}{% endif %}{% if it.offline %} (offline){% endif %}">
+                    {% if it.type_id %}<img src="{{ icon(it.type_id, 64) }}" alt="{{ it.name }}" loading="lazy">
+                    {% else %}<span class="q">?</span>{% endif %}
+                    {% if it.charge_id %}<img class="charge" src="{{ icon(it.charge_id, 32) }}" alt="{{ it.charge }}" loading="lazy">{% endif %}
+                    {% if it.has_qty %}<span class="qty">{{ it.qty }}</span>{% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if L.unknown %}
+        <p class="warn-line">Couldn't find icons for: {{ L.unknown|join(', ') }}. Check the spelling in the fit.</p>
+      {% endif %}
+      </div>
+
+      <div class="tab-panel" id="skills-{{ f.id }}" role="tabpanel" hidden>
+        {% if S and S.count %}
+          <div class="skill-head">
+            <div class="skill-intro">
+              <p class="skill-note">These are the <strong>bare minimum</strong> skills to fly this fit, including prerequisites. Extra levels will make it perform better.</p>
+              {% if S.train_all %}<p class="skill-note train-line"><span class="train-icon" aria-hidden="true">&#9719;</span> Training time from a brand new character: <strong>about {{ S.train_all }}</strong> <span class="muted">(Omega, average attributes, no implants)</span></p>{% endif %}
+            </div>
+            <div class="skill-btns">
+              {% if S.me and S.me.plan %}<button class="btn btn-eve copy-btn" type="button" data-copy="myplan-{{ f.id }}" data-toast="Your missing skills copied. In EVE: Skills window > Skill Plans > Import from Clipboard">Copy what I'm missing</button>{% endif %}
+              <button class="btn copy-btn" type="button" data-copy="plan-{{ f.id }}" data-toast="Skill plan copied. In EVE: Skills window > Skill Plans > Import from Clipboard">Copy as skill plan</button>
+            </div>
+          </div>
+          {% if S.me %}{% set me = S.me %}
+            <p class="me-summary {{ 'ready' if me.ready else 'short' if me.short else 'clone' }}">
+              {% if me.ready %}{{ pilot.name }} has every skill for this fit{% if S.fitting %}, including the fitting skills{% endif %}.
+              {% elif me.short %}{{ pilot.name }} is missing {{ me.short }} skill{{ 's' if me.short != 1 }} for this fit{% if me.clone %}, and {{ me.clone }} more {{ 'is' if me.clone == 1 else 'are' }} trained but held back by an alpha clone{% endif %}.{% if me.train %} <strong class="train-time">About {{ me.train }} of training</strong> {% if me.own_attrs %}with your attributes{% else %}with average attributes{% endif %}{% if me.alpha %}, at alpha speed (half of Omega){% endif %}.{% endif %} Copy what you're missing to get a skill plan with just those.
+              {% else %}{{ pilot.name }} has trained everything, but {{ me.clone }} skill{{ 's are' if me.clone != 1 else ' is' }} held back by an alpha clone. Omega is needed to fly this fit.{% endif %}
+            </p>
+            {% if me.plan %}<textarea id="myplan-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ me.plan }}</textarea>{% endif %}
+          {% endif %}
+          <div class="skill-groups">
+            {% for g in S.groups %}
+              <div class="skill-group">
+                <h4>{{ g.name }}</h4>
+                {% for sk in g.skills %}
+                  <div class="skill-row{% if sk.state %} me-{{ sk.state }}{% elif sk.omega %} is-omega{% endif %}">
+                    {{ sname(sk) }}{{ mine(sk) }}
+                    <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
+                      {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+          {% if S.fitting %}
+            <div class="fitting-skills">
+              <h4>Fitting skills <span class="muted">so everything fits (CPU / power grid)</span></h4>
+              <div class="skill-groups">
+                <div class="skill-group">
+                  {% for sk in S.fitting %}
+                    <div class="skill-row{% if sk.state %} me-{{ sk.state }}{% elif sk.omega %} is-omega{% endif %}">
+                      {{ sname(sk) }}{{ mine(sk) }}
+                      <span class="pips" title="Level {{ sk.level }} needed{% if S.caps_known %}, alpha max {{ sk.cap }}{% endif %}" aria-label="Level {{ sk.level }}{% if sk.omega %}, needs Omega{% endif %}">
+                        {% for i in range(1, 6) %}<i class="pip{% if i <= sk.level %}{% if S.caps_known and i > sk.cap %} omega{% else %} on{% endif %}{% endif %}"></i>{% endfor %}
+                      </span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% elif is_admin %}
+            <p class="skill-note muted fitting-empty">No fitting skills added yet. <a href="{{ url_for('fit_edit', fid=f.id) }}">Edit this fit</a> to add the CPU / power grid skills it needs.</p>
+          {% endif %}
+          <div class="legend">
+            <span><i class="pip"></i> Not required</span>
+            <span><i class="pip on"></i> Required</span>
+            {% if S.caps_known %}<span><i class="pip omega"></i> Level needs Omega</span>{% else %}<span class="muted">Alpha limits unavailable right now</span>{% endif %}
+            {% if S.me %}</div><div class="legend legend-me">
+            <span><span class="you ok">&#10003; Trained</span> you have this at the level needed</span>
+            <span><span class="you short">Have 2, need 3</span> train it higher</span>
+            <span><span class="you clone">Needs Omega</span> trained, but an alpha clone can't use that level</span>{% endif %}
+          </div>
+          <textarea id="plan-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ S.plan }}</textarea>
+        {% else %}
+          <p class="skill-note">Skill data isn't available right now. Refresh in a minute.</p>
+        {% endif %}
+      </div>
+
+      <div class="tab-panel" id="list-{{ f.id }}" role="tabpanel" hidden>
+        <div class="list-cols">
+        {% for kind in ORDER %}{% set items = L.groups[kind] %}
+          {% if items %}
+            <div class="list-group">
+              <h4>{{ LABELS[kind] }}</h4>
+              <ul>
+                {% for it in items if not it.empty %}
+                  <li>
+                    {% if it.type_id %}<img src="{{ icon(it.type_id, 32) }}" alt="" loading="lazy">{% else %}<span class="li-q">?</span>{% endif %}
+                    <span>{% if it.has_qty %}{{ it.qty }}&times; {% endif %}{{ it.name }}{% if it.charge %} <small>({{ it.charge }})</small>{% endif %}{% if it.offline %} <small>offline</small>{% endif %}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+        {% endfor %}
+        </div>
+        <pre class="eft-raw">{{ f.eft }}</pre>
+      </div>
+      <textarea id="eft-{{ f.id }}" class="hidden-eft" readonly aria-hidden="true">{{ f.eft }}</textarea>
+    </div>
+  </article>
+{% else %}
+  <div class="empty-state"><p>No fits in this doctrine yet.</p></div>
+{% endfor %}
+</div>
+{% endblock %}

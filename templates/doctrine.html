@@ -34,16 +34,14 @@
     {% if d.fits %}<a class="btn" href="{{ url_for('doctrine_export', did=d.id) }}" title="Import every fit at once via Import & Export > Import from File">Download all (XML)</a>{% endif %}
     {% if is_admin %}
       <form method="post" action="{{ url_for('doctrine_visibility', did=d.id) }}" class="vis-form auto-submit">
-        <div class="vis-controls">
-        <div class="vis-switch" role="group" aria-label="Who can see this doctrine">
-          <span class="vis-opt vis-public">Public</span>
-          <label class="switch" title="Slide right to make it {{ member_label }} only">
-            <input type="checkbox" name="visibility" value="alliance" {% if d.visibility == 'alliance' %}checked{% endif %} aria-label="{{ member_label }} only">
-            <span class="slider" aria-hidden="true"></span>
-          </label>
-          <span class="vis-opt vis-alliance"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }} only</span>
-        </div>
-        <label class="check"><input type="checkbox" name="is_private" value="1" {% if d.is_private %}checked{% endif %}> <span><strong>Private</strong> <span class="hint">only owners and editors can see it. For drafts and fits still being tested.</span></span></label>
+        <div class="seg" role="radiogroup" aria-label="Who can see this doctrine">
+        <input type="radio" class="seg-private" id="acc-private-{{ d.id }}" name="access" value="private" {% if ('private' if d.is_private else (d.visibility or 'public')) == 'private' %}checked{% endif %}>
+        <label for="acc-private-{{ d.id }}" title="Only owners and editors can see it. For drafts and fits still being tested."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Private</label>
+        <input type="radio" class="seg-alliance" id="acc-alliance-{{ d.id }}" name="access" value="alliance" {% if ('private' if d.is_private else (d.visibility or 'public')) == 'alliance' %}checked{% endif %}>
+        <label for="acc-alliance-{{ d.id }}" title="Needs an EVE login with a {{ member_label }} character"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }}</label>
+        <input type="radio" class="seg-public" id="acc-public-{{ d.id }}" name="access" value="public" {% if ('private' if d.is_private else (d.visibility or 'public')) == 'public' %}checked{% endif %}>
+        <label for="acc-public-{{ d.id }}" title="Anyone with the link"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>Public</label>
+        <span class="seg-thumb" aria-hidden="true"></span>
       </div>
         <noscript><button class="btn" type="submit">Save</button></noscript>
       </form>

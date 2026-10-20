@@ -12,17 +12,15 @@
       <input name="author" maxlength="120" value="{{ form.get('author', '') }}" placeholder="e.g. Xarasier Deninard" autocomplete="off">
     </label>
     <div class="field">
-      <span class="field-label">Who can see it <span class="hint">Public is anyone with the link. {{ member_label }} only needs an EVE login with a {{ member_label }} character.</span></span>
-      <div class="vis-controls">
-        <div class="vis-switch" role="group" aria-label="Who can see this doctrine">
-          <span class="vis-opt vis-public">Public</span>
-          <label class="switch" title="Slide right to make it {{ member_label }} only">
-            <input type="checkbox" name="visibility" value="alliance" {% if form.get('visibility', 'public') == 'alliance' %}checked{% endif %} aria-label="{{ member_label }} only">
-            <span class="slider" aria-hidden="true"></span>
-          </label>
-          <span class="vis-opt vis-alliance"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }} only</span>
-        </div>
-        <label class="check"><input type="checkbox" name="is_private" value="1" {% if form.get('is_private') %}checked{% endif %}> <span><strong>Private</strong> <span class="hint">only owners and editors can see it. For drafts and fits still being tested.</span></span></label>
+      <span class="field-label">Who can see it <span class="hint"><strong>Private</strong>: only owners and editors. <strong>{{ member_label }}</strong>: needs an EVE login with a {{ member_label }} character. <strong>Public</strong>: anyone with the link.</span></span>
+      <div class="seg" role="radiogroup" aria-label="Who can see this doctrine">
+        <input type="radio" class="seg-private" id="acc-private-form" name="access" value="private" {% if form.get('access', 'private') == 'private' %}checked{% endif %}>
+        <label for="acc-private-form" title="Only owners and editors can see it. For drafts and fits still being tested."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Private</label>
+        <input type="radio" class="seg-alliance" id="acc-alliance-form" name="access" value="alliance" {% if form.get('access', 'private') == 'alliance' %}checked{% endif %}>
+        <label for="acc-alliance-form" title="Needs an EVE login with a {{ member_label }} character"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }}</label>
+        <input type="radio" class="seg-public" id="acc-public-form" name="access" value="public" {% if form.get('access', 'private') == 'public' %}checked{% endif %}>
+        <label for="acc-public-form" title="Anyone with the link"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>Public</label>
+        <span class="seg-thumb" aria-hidden="true"></span>
       </div>
     </div>
     <label>Description <span class="hint">optional. Paste straight from Discord: **bold**, *italic*, `code`, - bullet lists, # headings and links all work.</span>

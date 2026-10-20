@@ -129,6 +129,25 @@
         run();
       });
     }
+    // editors: private doctrines are hidden until "Show private doctrines" is ticked
+    const privBtn = document.getElementById("private-toggle");
+    const PRIV_KEY = "rw-show-private";
+    let showPrivate = false;
+    if (privBtn) {
+      try { showPrivate = localStorage.getItem(PRIV_KEY) === "1"; } catch (e) { /* private mode */ }
+      const paintPriv = () => {
+        privBtn.setAttribute("aria-pressed", showPrivate ? "true" : "false");
+        privBtn.classList.toggle("on", showPrivate);
+        grid.classList.toggle("show-private", showPrivate);
+      };
+      paintPriv();
+      privBtn.addEventListener("click", () => {
+        showPrivate = !showPrivate;
+        try { localStorage.setItem(PRIV_KEY, showPrivate ? "1" : "0"); } catch (e) { /* private mode */ }
+        paintPriv();
+        run();
+      });
+    }
     const flyTag = { ready: '<span class="sr-fly ready">&#10003; Can fly</span>', short: '<span class="sr-fly short">Missing skills</span>', clone: '<span class="sr-fly clone">Needs Omega</span>' };
     function run() {
       const q = searchBox.value.trim().toLowerCase();
@@ -137,6 +156,7 @@
       const fits = [];
       data.fits.forEach((f) => {
         if (onlyFly && f.fly !== "ready") return;
+        if (f.private && !showPrivate) return;
         const fields = fitFields(f).filter(([, v]) => v);
         const hay = fields.map(([, v]) => v.toLowerCase()).join(" \u0001 ");
         if (!words.every((w) => hay.includes(w))) return;
@@ -147,6 +167,7 @@
       });
       fits.sort((a, b) => b.score - a.score);
       const docs = onlyFly ? [] : data.doctrines.filter((d) => {
+        if (d.private && !showPrivate) return false;
         const hay = [d.name, d.author, d.desc].join(" ").toLowerCase();
         return words.every((w) => hay.includes(w));
       });

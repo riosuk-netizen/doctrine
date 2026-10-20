@@ -60,11 +60,19 @@
       {% endif %}
     </div>
   {% endif %}
+  {% if is_admin and private_count %}
+    <div class="fly-filter">
+      <button type="button" id="private-toggle" class="chip-toggle chip-private" aria-pressed="false">
+        <span class="chip-box" aria-hidden="true"></span> Show private doctrines ({{ private_count }})
+      </button>
+      <span class="fly-hint muted">Only owners and editors can see these</span>
+    </div>
+  {% endif %}
   <div id="search-results" class="search-results" hidden aria-live="polite"></div>
   <script type="application/json" id="search-data">{{ search_data|tojson }}</script>
   <div class="doctrine-grid" id="doctrine-grid">
     {% for d in doctrines %}
-      <a class="doctrine-card" href="{{ url_for('doctrine', did=d.id) }}">
+      <a class="doctrine-card{% if d.is_private %} is-private{% endif %}" href="{{ url_for('doctrine', did=d.id) }}">
         <div class="card-top">
           <h2>{{ d.name }}{% if d.is_private %} <span class="vis-badge private sm">Private</span>{% endif %}{% if d.visibility == 'alliance' %} <span class="vis-badge alliance sm" title="{{ member_label }} only"><svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>{{ member_label }}</span>{% endif %}</h2>
           <span class="count">{{ d.fits|length }} fit{{ 's' if d.fits|length != 1 }}</span>

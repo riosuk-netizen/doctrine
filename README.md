@@ -21,6 +21,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Skill descriptions:** hover over any skill name (tap on phones) to see EVE's own description, plus its rank and training attributes.
 * **Training time:** the Required skills tab shows roughly how long the whole fit takes to train from a brand new character (Omega, average attributes, no implants). Logged-in pilots also see how long their missing skills will take with their own attributes, at half speed if they're on an alpha clone. Skill ranks and attributes come from ESI and are cached in the database.
 * Each fit shows **Last edited by [character] · [time]** with their portrait, updated whenever a fit is added, edited or copied. Fits from before this was added show nothing until someone next edits them.
+* **Fit cost:** each fit shows roughly what it costs to buy at Jita (Jita 4-4 sell prices from Fuzzwork, or EVE's average price if that's down), with hull and modules split out on hover. The Module list tab shows the price of every item. Ammo loaded in guns isn't counted, ammo in the cargo is. Prices are cached for an hour.
 * Fits can have several role tags, picked with buttons or typed separated by commas (e.g. `EWAR, DPS`).
 
 **For editors**
@@ -33,7 +34,7 @@ Live at https://doctrine-li9g.onrender.com/
 * **Show private doctrines:** private doctrines are hidden from the front page and search for everyone, editors included, until an editor ticks **Show private doctrines** under the search box. The choice is remembered in that browser.
 * **Copy to...:** each fit has a Copy to button for editors. Pick any doctrine (or the same one, or a new one) and the fit is copied with its notes, roles and fitting skills, then you go straight to the copy's edit page. A new doctrine made this way starts as private.
 * Then use **+ New doctrine** or **Edit / add fits**. The author box starts filled with your character name.
-* Paste one or more EFT fits; each starts with its `[Ship, Fit name]` line. Pick role tags with the buttons under the fits box (DPS, Logi, Tackle and so on) or type your own; every fit pasted in that go gets them, and each fit's tags can be changed on its own edit page. Stray tag lines like `(Tackle)` in the pasted text are ignored instead of showing as unknown modules.
+* The doctrine form has **one box per fit**, each with its own role tag buttons (DPS, Logi, Tackle and so on) and a box to type your own. **+ Add another fit** adds a box, and the x removes one. Each box takes an EFT fit starting with its `[Ship, Fit name]` line. Stray tag lines like `(Tackle)` in the pasted text are ignored instead of showing as unknown modules.
 * Doctrines have an **Author** (exact in-game character name, which shows their portrait linked to zKillboard) and show **Updated x ago**, which changes whenever anything in the doctrine changes.
 * Descriptions and fit notes take Discord formatting: `**bold**`, `*italic*`, `__underline__`, `~~strike~~`, `` `code` ``, `- bullets`, `1. numbers`, `#` headings, `-#` small text, `>` quotes and links. Copy a Discord message with **Copy Text** to keep the formatting.
 
@@ -58,6 +59,7 @@ Live at https://doctrine-li9g.onrender.com/
 | `esi.py` | Name to type ID lookup, character lookup |
 | `skills.py` | Required skills, prerequisites, alpha caps, skill plan text |
 | `sso.py` | EVE login (SSO) and saving fits to a character's fittings through ESI |
+| `prices.py` | Jita prices (Fuzzwork, ESI as backup) and fit costs |
 | `markup.py` | Discord-style formatting to safe HTML |
 | `templates/` | Pages: base, index, doctrine, doctrine_form, fit_form, access, deleted |
 | `static/` | `style.css`, `app.js`, logo (gif and png), share banner `og-banner.png` |

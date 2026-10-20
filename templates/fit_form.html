@@ -8,7 +8,7 @@
     <div class="two-col">
       <label>Fit name <input name="name" maxlength="120" value="{{ form.get('name', '') }}"></label>
       <label>Role tags <span class="hint">click to add or remove, or type your own, separated by commas</span> <input name="role" id="role-input" maxlength="60" value="{{ form.get('role', '') }}" placeholder="e.g. DPS, Tackle" autocomplete="off">
-      <div class="role-picker" data-for="role-input">
+      <div class="role-picker">
         {% for r in ROLE_PRESETS %}<button type="button" class="role-chip" data-role="{{ r }}" aria-pressed="false">{{ r }}</button>{% endfor %}
       </div></label>
     </div>

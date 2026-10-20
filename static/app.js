@@ -295,10 +295,12 @@
     document.querySelectorAll("details.copy-to[open]").forEach((dt) => { if (!dt.contains(e.target)) dt.open = false; });
   });
 
-  // Role tag buttons: click to add or remove a tag in the box next to them
+  // Role tag buttons: click to add or remove a tag in the box just before them
   const tagsOf = (input) => input.value.split(",").map((t) => t.trim()).filter(Boolean);
+  const roleInput = (picker) => picker.previousElementSibling;
   function paintRoles(picker) {
-    const input = document.getElementById(picker.dataset.for);
+    const input = roleInput(picker);
+    if (!input) return;
     const have = tagsOf(input).map((t) => t.toLowerCase());
     picker.querySelectorAll(".role-chip").forEach((b) => {
       const on = have.includes(b.dataset.role.toLowerCase());
@@ -306,22 +308,51 @@
       b.setAttribute("aria-pressed", on ? "true" : "false");
     });
   }
-  document.querySelectorAll(".role-picker").forEach((picker) => {
-    const input = document.getElementById(picker.dataset.for);
-    if (!input) return;
-    paintRoles(picker);
-    input.addEventListener("input", () => paintRoles(picker));
-    picker.addEventListener("click", (e) => {
-      const b = e.target.closest(".role-chip");
-      if (!b) return;
-      e.preventDefault();
-      const tags = tagsOf(input);
-      const i = tags.findIndex((t) => t.toLowerCase() === b.dataset.role.toLowerCase());
-      if (i >= 0) tags.splice(i, 1); else tags.push(b.dataset.role);
-      input.value = tags.join(", ");
-      paintRoles(picker);
-    });
+  document.querySelectorAll(".role-picker").forEach(paintRoles);
+  document.addEventListener("input", (e) => {
+    const next = e.target.nextElementSibling;
+    if (next && next.classList.contains("role-picker")) paintRoles(next);
   });
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".role-chip");
+    if (!b) return;
+    e.preventDefault();
+    const picker = b.closest(".role-picker"), input = roleInput(picker);
+    const tags = tagsOf(input);
+    const i = tags.findIndex((t) => t.toLowerCase() === b.dataset.role.toLowerCase());
+    if (i >= 0) tags.splice(i, 1); else tags.push(b.dataset.role);
+    input.value = tags.join(", ");
+    paintRoles(picker);
+  });
+
+  // Doctrine form: one box per fit, with Add another fit and remove buttons
+  const blocks = document.getElementById("fit-blocks");
+  const tpl = document.getElementById("fit-block-template");
+  function renumber() {
+    const all = blocks.querySelectorAll(".fit-block");
+    all.forEach((bl, i) => {
+      bl.querySelector(".fit-block-title").textContent = "Fit " + (i + 1);
+      bl.querySelector(".fit-block-remove").hidden = all.length === 1;
+    });
+  }
+  if (blocks && tpl) {
+    renumber();
+    document.getElementById("add-fit-block").addEventListener("click", () => {
+      blocks.appendChild(tpl.content.cloneNode(true));
+      renumber();
+      const added = blocks.lastElementChild;
+      paintRoles(added.querySelector(".role-picker"));
+      added.querySelector("textarea").focus();
+    });
+    blocks.addEventListener("click", (e) => {
+      const rm = e.target.closest(".fit-block-remove");
+      if (!rm) return;
+      const bl = rm.closest(".fit-block");
+      if (bl.querySelector("textarea").value.trim() && !window.confirm("Remove this fit from the form?")) return;
+      bl.remove();
+      renumber();
+    });
+  }
 
   // Tap a module tile on touch screens to see its name
   document.addEventListener("click", (e) => {

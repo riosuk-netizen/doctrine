@@ -645,3 +645,19 @@ label.check input { width: auto; margin-top: 3px; accent-color: var(--accent); }
 .role-chip:hover { color: var(--text); border-color: #3a4a60; }
 .role-chip.on { background: rgba(232,163,60,.16); border-color: rgba(232,163,60,.55); color: var(--accent-2); }
 .role-chip.on::before { content: "\2713  "; }
+
+/* one box per fit on the doctrine form */
+.fit-blocks { display: flex; flex-direction: column; gap: 12px; }
+.fit-block { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-2); }
+.fit-block-head { display: flex; align-items: center; justify-content: space-between; }
+.fit-block-title { font-family: "Rajdhani", "Inter", sans-serif; font-weight: 700; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .05em; color: var(--accent-2); }
+.fit-block-remove[hidden] { display: none; }
+.fit-block-label { font-weight: 600; font-size: .88rem; }
+.add-fit-block { align-self: flex-start; }
+
+/* Jita price */
+.price-pill { display: inline-block; margin-left: 6px; padding: 1px 9px; border-radius: 999px; font-size: .74rem; font-weight: 700; letter-spacing: .02em; vertical-align: 1px;
+  color: #cfe0f5; background: rgba(120,150,190,.14); border: 1px solid rgba(120,150,190,.35); cursor: help; }
+.price-summary { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-2); font-size: .88rem; }
+.price-summary .muted { font-size: .8rem; }
+.li-price { margin-left: auto; padding-left: 10px; color: var(--muted); font-size: .8rem; white-space: nowrap; font-variant-numeric: tabular-nums; }

@@ -9,6 +9,7 @@ from flask import (Flask, Response, abort, flash, g, jsonify, redirect,
 
 import esi
 import markup
+import prices
 import skills
 import sso
 from eft import (DISPLAY_ORDER, LABELS, EFTError, all_names, build_layout,
@@ -101,6 +102,7 @@ def ago(dt):
 
 app.jinja_env.filters["ukdate"] = ukdate
 app.jinja_env.filters["fromjson"] = json.loads
+app.jinja_env.filters["isk"] = prices.isk
 app.jinja_env.filters["ago"] = ago
 META_NAMES = {2: "Tech II", 3: "Storyline", 4: "Faction", 5: "Officer", 6: "Deadspace", 14: "Tech III"}
 app.jinja_env.globals["META_NAMES"] = META_NAMES
@@ -272,6 +274,26 @@ def clean_roles(text):
     return ", ".join(out)[:60]
 
 
+def fit_blocks(form):
+    """The fit boxes on the doctrine form: [{"eft", "role"}], always at least one."""
+    efts, roles = form.getlist("fit_eft"), form.getlist("fit_role")
+    blocks = [{"eft": e, "role": roles[i] if i < len(roles) else ""} for i, e in enumerate(efts)]
+    if form.get("eft"):  # older form with one big box
+        blocks.append({"eft": form.get("eft"), "role": form.get("role", "")})
+    return blocks or [{"eft": "", "role": ""}]
+
+
+def add_fit_blocks(doctrine, form):
+    """Add every filled-in fit box. Returns (added count, error messages)."""
+    total, errors = 0, []
+    for b in fit_blocks(form):
+        if b["eft"].strip():
+            n, errs = add_fits_from_text(doctrine, b["eft"], b["role"])
+            total += n
+            errors += errs
+    return total, errors
+
+
 def add_fits_from_text(doctrine, text, roles=""):
     """Parse pasted EFT text into Fit rows. Returns (added count, error messages).
     roles: role tags chosen on the form, given to every fit pasted in this go."""
@@ -354,9 +376,14 @@ def doctrine(did):
     fitting = {f.id: f.fitting_levels() for f in d.fits}
     pd = sso.pilot_data(session)
     have = pd["skills"] if pd else None
+    try:
+        costs, item_prices = prices.fit_costs(layouts)
+    except Exception:
+        app.logger.exception("Jita prices failed")
+        costs, item_prices = {}, {}
     return render_template("doctrine.html", d=d, layouts=layouts,
                            skill_views=skills.fit_skills(layouts, fitting, have, pd["attrs"] if pd else None),
-                           ship_meta=ship_meta, have_skills=have is not None,
+                           ship_meta=ship_meta, have_skills=have is not None, costs=costs, item_prices=item_prices,
                            all_doctrines=Doctrine.query.order_by(Doctrine.name).all() if is_admin() else [])
 
 
@@ -377,24 +404,24 @@ def doctrine_new():
         name = request.form.get("name", "").strip()
         if not name:
             flash("Give the doctrine a name.", "warn")
-            return render_template("doctrine_form.html", d=None, form=request.form)
+            return render_template("doctrine_form.html", d=None, form=request.form, blocks=fit_blocks(request.form))
         d = Doctrine(name=name[:120], description=request.form.get("description", "").strip())
         set_author(d, request.form.get("author", ""))
         _set_visibility(d, request.form)
         db.session.add(d)
-        n, errors = add_fits_from_text(d, request.form.get("eft", ""), request.form.get("role", ""))
+        n, errors = add_fit_blocks(d, request.form)
         if n == 0:
             db.session.rollback()
-            for e in errors:
+            for e in errors or ["Paste at least one fit. Each fit starts with a line like [Ship, Fit name]."]:
                 flash(e, "warn")
-            return render_template("doctrine_form.html", d=None, form=request.form)
+            return render_template("doctrine_form.html", d=None, form=request.form, blocks=fit_blocks(request.form))
         db.session.commit()
         for e in errors:
             flash(e, "warn")
         flash(f"Doctrine created with {n} fit{'s' if n != 1 else ''}.", "ok")
         return redirect(url_for("doctrine", did=d.id))
     return render_template("doctrine_form.html", d=None, form={"author": session.get("sso_char_name", ""),
-                                                            "access": "private"})
+                                                            "access": "private"}, blocks=fit_blocks(request.form))
 
 
 @app.route("/doctrine/<int:did>/edit", methods=["GET", "POST"])
@@ -407,16 +434,15 @@ def doctrine_edit(did):
         set_author(d, request.form.get("author", ""))
         _set_visibility(d, request.form)
         d.updated_at = now()
-        n, errors = (0, [])
-        if request.form.get("eft", "").strip():
-            n, errors = add_fits_from_text(d, request.form["eft"], request.form.get("role", ""))
+        n, errors = add_fit_blocks(d, request.form)
         db.session.commit()
         for e in errors:
             flash(e, "warn")
         flash("Doctrine updated" + (f", {n} fit{'s' if n != 1 else ''} added." if n else "."), "ok")
         return redirect(url_for("doctrine", did=d.id))
     return render_template("doctrine_form.html", d=d, form={"name": d.name, "description": d.description, "author": d.author or "",
-                                                         "access": "private" if d.is_private else (d.visibility or "public")})
+                                                         "access": "private" if d.is_private else (d.visibility or "public")},
+                           blocks=fit_blocks(request.form))
 
 
 def _set_visibility(d, form):

@@ -26,15 +26,36 @@
     <label>Description <span class="hint">optional. Paste straight from Discord: **bold**, *italic*, `code`, - bullet lists, # headings and links all work.</span>
       <textarea name="description" rows="10">{{ form.get('description', '') }}</textarea>
     </label>
-    <label>{{ 'Add more fits' if d else 'Fits' }} <span class="hint">paste one or more EFT fits. In game: Fitting window, pick the fit, Copy to Clipboard. Pyfa: Export &gt; EFT.</span>
-      <textarea name="eft" rows="16" class="mono" placeholder="[Ferox, Ferox Fleet]&#10;Damage Control II&#10;Magnetic Field Stabilizer II&#10;...&#10;&#10;[Scimitar, Scimitar Logi]&#10;...">{{ form.get('eft', '') }}</textarea>
-    </label>
-    <label>Role tags for these fits <span class="hint">optional. Click to add or remove, or type your own, separated by commas. Every fit pasted above gets these; you can change each fit's tags later with its Edit button.</span>
-      <input name="role" id="role-input" maxlength="60" value="{{ form.get('role', '') }}" placeholder="e.g. DPS, Tackle" autocomplete="off">
-      <div class="role-picker" data-for="role-input">
-        {% for r in ROLE_PRESETS %}<button type="button" class="role-chip" data-role="{{ r }}" aria-pressed="false">{{ r }}</button>{% endfor %}
+    <div class="field">
+      <span class="field-label">{{ 'Add more fits' if d else 'Fits' }} <span class="hint">one fit per box. In game: Fitting window, pick the fit, Copy to Clipboard. Pyfa: Export &gt; EFT.{% if d %} Leave empty to just save the details above.{% endif %}</span></span>
+      <div class="fit-blocks" id="fit-blocks">
+        {% for b in blocks %}
+      <div class="fit-block">
+        <div class="fit-block-head">
+          <span class="fit-block-title">Fit</span>
+          <button type="button" class="btn btn-ghost icon-btn danger fit-block-remove" title="Remove this fit" aria-label="Remove this fit">&times;</button>
+        </div>
+        <textarea name="fit_eft" rows="10" class="mono" placeholder="[Ferox, Ferox Fleet]&#10;Damage Control II&#10;Magnetic Field Stabilizer II&#10;...">{{ b.eft }}</textarea>
+        <span class="fit-block-label">Role tags <span class="hint">click to add or remove, or type your own</span></span>
+        <input name="fit_role" maxlength="60" value="{{ b.role }}" placeholder="e.g. DPS, Tackle" autocomplete="off">
+        <div class="role-picker">{% for r in ROLE_PRESETS %}<button type="button" class="role-chip" data-role="{{ r }}" aria-pressed="false">{{ r }}</button>{% endfor %}</div>
       </div>
-    </label>
+        {% endfor %}
+      </div>
+      <button type="button" class="btn add-fit-block" id="add-fit-block">+ Add another fit</button>
+      <template id="fit-block-template">
+      <div class="fit-block">
+        <div class="fit-block-head">
+          <span class="fit-block-title">Fit</span>
+          <button type="button" class="btn btn-ghost icon-btn danger fit-block-remove" title="Remove this fit" aria-label="Remove this fit">&times;</button>
+        </div>
+        <textarea name="fit_eft" rows="10" class="mono" placeholder="[Ferox, Ferox Fleet]&#10;Damage Control II&#10;Magnetic Field Stabilizer II&#10;..."></textarea>
+        <span class="fit-block-label">Role tags <span class="hint">click to add or remove, or type your own</span></span>
+        <input name="fit_role" maxlength="60" value="" placeholder="e.g. DPS, Tackle" autocomplete="off">
+        <div class="role-picker">{% for r in ROLE_PRESETS %}<button type="button" class="role-chip" data-role="{{ r }}" aria-pressed="false">{{ r }}</button>{% endfor %}</div>
+      </div>
+      </template>
+    </div>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">{{ 'Save' if d else 'Create doctrine' }}</button>
     </div>

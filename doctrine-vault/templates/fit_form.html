@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ f.name }} · Rift Watch Fleet Doctrines{% endblock %}
+{% block content %}
+<section class="form-page">
+  <a class="back" href="{{ url_for('doctrine', did=f.doctrine_id) }}#fit-{{ f.id }}">&larr; Back to {{ f.doctrine.name }}</a>
+  <h1>Edit fit</h1>
+  <form method="post" class="panel">
+    <div class="two-col">
+      <label>Fit name <input name="name" maxlength="120" value="{{ form.get('name', '') }}"></label>
+      <label>Role tags <span class="hint">separate with commas for more than one</span> <input name="role" maxlength="60" value="{{ form.get('role', '') }}" placeholder="DPS, Logi, Tackle..."></label>
+    </div>
+    <label>Notes <span class="hint">optional: skills, piloting tips, alternatives. Discord formatting works here too.</span>
+      <textarea name="notes" rows="3">{{ form.get('notes', '') }}</textarea>
+    </label>
+    <fieldset class="fs-picker">
+      <legend>Fitting skills <span class="hint">the extra skills pilots need so the whole fit fits (CPU and power grid). Click a box to set the level, click the same box again to clear it.</span></legend>
+      {% for row in fitting_rows %}
+        <div class="fs-row" role="radiogroup" aria-label="{{ row.name }}">
+          <span class="fs-name"><span class="skill-name{% if row.desc %} has-tip{% endif %}"{% if row.desc %} tabindex="0"{% endif %}>{{ row.name }}{% if row.desc %}<span class="skill-tip" role="tooltip"><strong>{{ row.name }}</strong><span class="tip-meta">Rank {{ row.rank }}{% if row.attrs %} &middot; {{ row.attrs }}{% endif %}</span>{{ row.desc }}</span>{% endif %}</span>{% if row.cap is not none %} <small>alpha max {{ row.cap }}</small>{% endif %}</span>
+          <span class="fs-boxes">
+            {% for i in range(5, 0, -1) %}
+              <input type="radio" name="fs_{{ row.id }}" id="fs_{{ row.id }}_{{ i }}" value="{{ i }}" {% if row.level == i %}checked{% endif %}>
+              <label for="fs_{{ row.id }}_{{ i }}" class="fs-box{% if row.cap is not none and i > row.cap %} omega{% endif %}" title="{{ row.name }} {{ i }}{% if row.cap is not none and i > row.cap %} (Omega){% endif %}"><span class="sr-only">Level {{ i }}</span></label>
+            {% endfor %}
+            <input type="radio" name="fs_{{ row.id }}" id="fs_{{ row.id }}_0" value="0" {% if not row.level %}checked{% endif %} class="fs-zero">
+          </span>
+        </div>
+      {% endfor %}
+    </fieldset>
+    <label>EFT
+      <textarea name="eft" rows="18" class="mono" required>{{ form.get('eft', '') }}</textarea>
+    </label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Save fit</button></div>
+  </form>
+</section>
+{% endblock %}
